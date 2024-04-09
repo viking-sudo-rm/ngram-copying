@@ -1,24 +1,10 @@
 import httpx
 import asyncio
-import requests
 import numpy as np
-
-
-class RustyDawgClient:
-    """Make single request to an API."""
-
-    def __init__(self, host: str = "localhost:5000"):
-        self.host = host
-
-    def query(self, text):
-        url = f"http://{self.host}/api/cdawg"
-        res = requests.post(url, json={"text": text})
-        return res.json()
 
 async def post_async(url, json):
     async with httpx.AsyncClient() as client:
         return await client.post(url, json=json)
-
 
 class AsyncRustyDawgClient:
     """Make several requests asynchronously and pool the results."""
@@ -53,21 +39,10 @@ class AsyncRustyDawgClient:
             "counts": all_counts,
         }
 
-
-def test_normal():
-    text = ["Four score and seven years ago, Rusty DAWG was launched."]
-    client = RustyDawgClient()
-    print("Got:", client.query(text))
-
 async def test_async():
     text = ["Four score and seven years ago, Rusty DAWG was launched."]
     client = AsyncRustyDawgClient(["localhost:5000", "localhost:5001"])
     print("Got:", await client.query(text))
 
-
 if __name__ == "__main__":
-    print("=== Testing normal... ===")
-    test_normal()
-
-    print("Testing async...")
     asyncio.run(test_async())
