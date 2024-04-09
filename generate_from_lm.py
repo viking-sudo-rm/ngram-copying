@@ -10,7 +10,7 @@ import torch
 from argparse import ArgumentParser
 import os
 
-from transformers import AutoTokenizer, GPTNeoXForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM
 from transformers import set_seed
 
 def get_params_grid(args):
@@ -64,16 +64,18 @@ class Generator:
                 input_ids = output_ids.cpu()
         return input_ids
 
-def append_to_jsonl(fh, all_tokens, texts, base_seed, model, decoding, prompt):    
-    for seed, (tokens, text) in enumerate(zip(all_tokens, texts)):
+def append_to_jsonl(fh, prompts, all_tokens, texts, seed, model, decoding, plen):    
+    for pidx, (prompt, tokens, text) in enumerate(zip(prompts, all_tokens, texts)):
         blob = {
+            "prompt": prompt,
             "tokens": tokens.tolist(),
             "text": text,
             "meta": {
                 "model": model,
                 "decoding": decoding,
-                "seed": base_seed + seed,
-                "prompt": prompt,
+                "seed": seed,
+                "prompt_idx": pidx,
+                "prompt_len": plen,
             }
         }
         fh.write(json.dumps(blob))
@@ -105,10 +107,8 @@ def parse_args():
 
 def main(args):
     args.device = "cuda" if torch.cuda.is_available() else "cpu"
-    n_seeds = 1
-    args.batch_size = min(args.batch_size, n_seeds)  # Just once per prompt.
     tokenizer = AutoTokenizer.from_pretrained(args.model, padding_side="left")
-    model = GPTNeoXForCausalLM.from_pretrained(args.model)
+    model = AutoModelForCausalLM.from_pretrained(args.model)
     model.cuda()
 
     # Get all parameters to explore.
@@ -116,22 +116,29 @@ def main(args):
 
     # Load all the prompts from JSONL.
     with open(args.prompts_path) as fh:
-        prompts = [json.loads(line) for line in fh.readlines()]
+        blobs = [json.loads(line) for line in fh.readlines()]
+        prompts = [tokenizer.encode(blob["text"]) for blob in blobs]
+    args.batch_size = min(args.batch_size, len(prompts))
 
     pbar = tqdm.tqdm(total=len(all_params) * len(prompts) * len(args.prompt_lengths))
     with open(args.save_path, "w") as fh:
-        for pidx, prompt in enumerate(prompts):
-            prompt_ids = tokenizer.encode(prompt["text"], return_tensors="pt")
-            for plen in args.prompt_lengths:
-                prefix_ids = prompt_ids[:, :plen]  # Careful with indexing!
-                for name, params in all_params.items():
-                    pbar.set_description(name)
-                    generator = Generator(tokenizer, model, params, args.device, args.seed)
-                    input_ids = generator.iterate_generate(prefix_ids, args.n_tokens).squeeze()
-                    text = tokenizer.decode(input_ids, skip_special_tokens=True)
-                    prompt_meta = {"id": pidx, "tokens": prefix_ids.squeeze(dim=0).tolist()}
-                    append_to_jsonl(fh, [input_ids], [text], base_seed=args.seed, model=args.model, decoding=params, prompt=prompt_meta)
-                    pbar.update(1)
+        for plen in args.prompt_lengths:
+            prefixes = torch.tensor([prompt[:plen] for prompt in prompts])
+            for name, params in all_params.items():
+                pbar.set_description(name)
+                generator = Generator(tokenizer, model, params, args.device, args.seed)
+                all_input_ids = []
+                for b in range(0, prefixes.size(0), args.batch_size):
+                    batch = prefixes[b:b + args.batch_size]
+                    input_ids = generator.iterate_generate(batch, args.n_tokens).squeeze()
+                    all_input_ids.extend(input_ids)
+                    pbar.update(input_ids.size(0))
+                texts = [tokenizer.decode(tokens, skip_special_tokens=True) for tokens in all_input_ids]
+                append_to_jsonl(fh, prefixes.tolist(), all_input_ids, texts,
+                                seed=args.seed,
+                                model=args.model,
+                                decoding=params,
+                                plen=plen,)
     pbar.close()
 
 if __name__ == "__main__":
