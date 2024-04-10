@@ -2,26 +2,27 @@ import httpx
 import asyncio
 import numpy as np
 
-async def post_async(url, json):
-    async with httpx.AsyncClient() as client:
-        return await client.post(url, json=json)
-
 class AsyncRustyDawgClient:
     """Make several requests asynchronously and pool the results."""
 
-    def __init__(self, hosts: list[str] = ["localhost:5000"]):
+    def __init__(self, hosts: list[str] = ["localhost:5000"], read_timeout=60.0):
         self.hosts = hosts
+        self.timeout = httpx.Timeout(5.0, read=read_timeout)
     
-    async def query(self, text):
+    async def post_async(self, url, json):
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            return await client.post(url, json=json)
+
+    async def query(self, json):
         urls = [f"http://{host}/api/cdawg" for host in self.hosts]
-        json  = {"text": text}
-        results = await asyncio.gather(*map(lambda url: post_async(url, json), urls))
+        results = await asyncio.gather(*map(lambda url: self.post_async(url, json), urls))
         blobs = [res.json() for res in results]
 
         all_lengths = []
         all_counts = []
 
-        for doc in range(len(text)):
+        n_docs = len(json["text"]) if "text" in json else len(json["tokens"])
+        for doc in range(n_docs):
             # First aggregate the lengths by taking the max.
             lengths = [blob["lengths"][doc] for blob in blobs]
             lengths = np.stack(lengths, axis=0)  # [n_machines, n_tokens]
@@ -40,9 +41,9 @@ class AsyncRustyDawgClient:
         }
 
 async def test_async():
-    text = ["Four score and seven years ago, Rusty DAWG was launched."]
+    json = {"text": ["Four score and seven years ago, Rusty DAWG was launched."]}
     client = AsyncRustyDawgClient(["localhost:5000", "localhost:5001"])
-    print("Got:", await client.query(text))
+    print("Got:", await client.query(json))
 
 if __name__ == "__main__":
     asyncio.run(test_async())

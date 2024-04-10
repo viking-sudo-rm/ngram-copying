@@ -14,22 +14,35 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from transformers import set_seed
 
 def get_params_grid(args):
+    """Get decoding parameters.
+
+    See here: https://huggingface.co/docs/transformers/en/main_classes/text_generation
+    """
     all_params = {}
-    if args.sample:
-        all_params["sample-norepeat=2"] = dict(do_sample=True, no_repeat_ngram_size=2)
-        all_params["sample"] = dict(do_sample=True)  # This does top_k=50 by default I believe.
+
+    # === Greedy decoding methods ===
+    if args.greedy:
+        all_params["greedy"] = dict()
+    # Greedy decoding with beam search.
     for b in args.beam:
-        all_params[f"beam={b}-norepeat=2"] = dict(num_beams=b, no_repeat_ngram_size=2)
         all_params[f"beam={b}"] = dict(num_beams=b)
+    # Greedy decoding with no repetition.
+    for r in args.no_repeat:
+        all_params[f"no_repeat={r}"] = dict(no_repeat_ngram_size=r)
+
+    # === Sampling decoding methods ===    
+    if args.sample:
+        all_params["sample"] = dict(do_sample=True)
+    # Sampling with top k.
     for k in args.top_k:
-        all_params[f"top_k={k}-norepeat=2"] = dict(do_sample=True, top_k=k, no_repeat_ngram_size=2)
         all_params[f"top_k={k}"] = dict(do_sample=True, top_k=k)
+    # Nucleus sampling.
     for p in args.top_p:
-        all_params[f"top_p={p}-norepeat=2"] = dict(do_sample=True, top_p=p, no_repeat_ngram_size=2)
         all_params[f"top_p={p}"] = dict(do_sample=True, top_p=p)
+    # Modifying the temperature.
     for temp in args.temperature:
-        all_params[f"temp={temp}-norepeat=2"] = dict(do_sample=True, temperature=temp, no_repeat_ngram_size=2)
         all_params[f"temp={temp}"] = dict(do_sample=True, temperature=temp)
+
     return all_params
 
 class Generator:
@@ -89,10 +102,12 @@ def parse_args():
     parser.add_argument("--n_tokens", type=int, default=1000)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--batch_size", type=int, default=10)
+    parser.add_argument("-n", "--prompt_lengths", type=int, nargs="+", default=[1, 4, 16, 64, 100],
+                        help="Prefix length of prompts to use, in tokens")
 
-    # Arguments for grid search
-    parser.add_argument("--sample", action="store_true",
-                        help="Try decoding with naive sampling")
+    # === Decoding options ===
+    parser.add_argument("--greedy", action="store_true", help="Try greedy decoding")
+    parser.add_argument("--sample", action="store_true", help="Try naive sampling decoding")
     parser.add_argument("-t", "--temperature", type=float, nargs="+", default=[],
                         help="List of temperatures to decode with")
     parser.add_argument("-k", "--top_k", type=int, nargs="+", default=[],
@@ -101,8 +116,8 @@ def parse_args():
                         help="top-p/nucleus sampling parameter list")
     parser.add_argument("-b", "--beam", type=int, nargs="+", default=[],
                         help="Beam sizes for argmax decoding")
-    parser.add_argument("-n", "--prompt_lengths", type=int, nargs="+", default=[1, 10, 100],
-                        help="Prefix length of prompts to use, in tokens")
+    parser.add_argument("-r", "--no_repeat", type=int, nargs="+", default=[],
+                        help="N-gram lengths to prevent decoding.")
     return parser.parse_args()
 
 def main(args):
