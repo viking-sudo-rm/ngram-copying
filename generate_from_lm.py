@@ -46,47 +46,37 @@ def get_params_grid(args):
     return all_params
 
 class Generator:
-    def __init__(self, tokenizer, model, params: dict, device="cuda", seed: int = 42):
-        self.tokenizer = tokenizer
+    def __init__(self, model, params: dict, device="cuda"):
         self.model = model
         self.params = params
         self.device = device
-        self.seed = seed
 
     @torch.no_grad()
-    def iterate_generate(self,
-                         input_ids,
-                         full_length: int,
-                         context_length: int = 512,
-                         stride: int = 512,
-                         n_return: int = 1,
-                        ):
-        set_seed(self.seed)
-        # input_ids = tokenizer.encode("The", return_tensors="pt")
-        while input_ids.size(1) < full_length:
-            context = input_ids[:, -context_length:].to(self.device)
-            num_return_sequences = n_return if context.size(0) == 1 else 1
-            output_ids = self.model.generate(context,
-                                             max_new_tokens=stride,
-                                             pad_token_id=50256,
-                                             num_return_sequences=num_return_sequences,
-                                             **self.params)
-            if input_ids.size(0) == output_ids.size(0):
-                input_ids = torch.cat([input_ids[:, :-context_length], output_ids.cpu()], dim=1)
-            else: # Only reachable on first batch.
-                input_ids = output_ids.cpu()
-        return input_ids
+    def generate(self, prompts, length: int):
+        """Take some tokens and continue them."""
+        prompts = prompts.to(self.device)
+        mask = torch.ones_like(prompts)
+        tokens = self.model.generate(input_ids=prompts,
+                                     attention_mask=mask,
+                                     max_new_tokens=length,
+                                     **self.params)
+        return self.remove_padding(tokens.tolist())
 
-def append_to_jsonl(fh, prompts, all_tokens, texts, seed, model, decoding, plen):    
+    def remove_padding(self, all_tokens):
+        pad_token = self.model.pad_token_id
+        for idx in range(len(all_tokens)):
+            all_tokens[idx] = [t for t in all_tokens[idx] if t != pad_token]
+        return all_tokens
+
+def append_to_jsonl(fh, prompts, all_tokens: list, texts, model, decoding, plen):    
     for pidx, (prompt, tokens, text) in enumerate(zip(prompts, all_tokens, texts)):
         blob = {
             "prompt": prompt,
-            "tokens": tokens.tolist(),
+            "tokens": tokens,
             "text": text,
             "meta": {
                 "model": model,
                 "decoding": decoding,
-                "seed": seed,
                 "prompt_idx": pidx,
                 "prompt_len": plen,
             }
@@ -121,10 +111,12 @@ def parse_args():
     return parser.parse_args()
 
 def main(args):
+    set_seed(args.seed)
     args.device = "cuda" if torch.cuda.is_available() else "cpu"
     tokenizer = AutoTokenizer.from_pretrained(args.model, padding_side="left")
     model = AutoModelForCausalLM.from_pretrained(args.model)
     model.cuda()
+    model.pad_token_id = 0
 
     # Get all parameters to explore.
     all_params = get_params_grid(args)
@@ -141,20 +133,20 @@ def main(args):
             prefixes = torch.tensor([prompt[:plen] for prompt in prompts])
             for name, params in all_params.items():
                 pbar.set_description(name)
-                generator = Generator(tokenizer, model, params, args.device, args.seed)
+                generator = Generator(model, params, args.device)
                 all_input_ids = []
                 for b in range(0, prefixes.size(0), args.batch_size):
                     batch = prefixes[b:b + args.batch_size]
-                    input_ids = generator.iterate_generate(batch, args.n_tokens).squeeze()
+                    input_ids = generator.generate(batch, args.n_tokens)
                     all_input_ids.extend(input_ids)
-                    pbar.update(input_ids.size(0))
+                    pbar.update(len(input_ids))
                 texts = [tokenizer.decode(tokens, skip_special_tokens=True) for tokens in all_input_ids]
                 append_to_jsonl(fh, prefixes.tolist(), all_input_ids, texts,
-                                seed=args.seed,
                                 model=args.model,
                                 decoding=params,
                                 plen=plen,)
     pbar.close()
+    print(tokenizer.decode(all_input_ids[0]))
 
 if __name__ == "__main__":
     main(parse_args())
