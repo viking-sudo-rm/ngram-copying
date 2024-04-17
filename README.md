@@ -24,10 +24,10 @@ python sample_prompts_and_val.py --by_domain --n_samples=100 \
 
 ### Generating Data from Models
 
-To just run across all models, can do:
+To generate data from each model:
 
 ```bash
-./generate_from_lms.sh
+gantry run --workspace ai2/rusty-dawg --gpus=1 --budget=ai2/allennlp -- scripts/generate_by_model.sh
 ```
 
 <details>
