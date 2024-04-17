@@ -2,18 +2,24 @@
 
 ## Usage
 
-### Sampling Prompts
+First set the environment variable:
+```bash
+export ROOT=/net/nfs.cirrascale/allennlp/willm/ngram-copying
+```
+
+### Sampling Prompts and Validation Data
 
 Prompts can be sampled from the Pile via:
 ```
-python sample_prompts.py
+python sample_prompts_and_val.py --n_samples=10000
 ```
 
-### Preprocess Validation Set
-
-To preprocess the validation set (tokenize and only keep first 1000 tokens from each document):
-```bash
-python process_val_data.py /net/nfs.cirrascale/allennlp/willm/ngram-copying/validation/val-20.jsonl /net/nfs.cirrascale/allennlp/willm/ngram-copying/validation/val-20-tokens.jsonl
+Or to generate models with 100 samples per domain (besides one where there are not 100):
+```
+mkdir /net/nfs.cirrascale/allennlp/willm/ngram-copying/data/by-domain
+python sample_prompts_and_val.py --by_domain --n_samples=100 \
+    --prompts_save_path=$ROOT/data/by-domain/prompts.jsonl \
+    --val_save_path=$ROOT/data/by-domain/val.jsonl
 ```
 
 ### Generating Data from Models
@@ -21,7 +27,6 @@ python process_val_data.py /net/nfs.cirrascale/allennlp/willm/ngram-copying/vali
 To just run across all models, can do:
 
 ```bash
-export ROOT=/net/nfs.cirrascale/allennlp/willm/ngram-copying
 ./generate_from_lms.sh
 ```
 
