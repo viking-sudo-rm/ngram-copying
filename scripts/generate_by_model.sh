@@ -19,11 +19,11 @@ mkdir $DIR
 for idx in "${!SIZES[@]}"; do
     size=${SIZES[idx]}
     model="pythia-$size$SUFFIX"
-    echo "===== ${model} ====="
+    echo "===== $model ====="
     python generate_from_lm.py \
-        EleutherAI/${MODEL} \
+        EleutherAI/$model \
         $PROMPTS_PATH \
-        $DIR/${model}.jsonl \
+        $DIR/$model.jsonl \
         --n_tokens=$N_TOKENS \
         --sample
 done
