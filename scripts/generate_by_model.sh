@@ -24,8 +24,7 @@ for idx in "${!SIZES[@]}"; do
         --cluster ai2/allennlp-cirrascale \
         --venv base \
         --budget=ai2/allennlp \
-        --gpus=1 \ 
-        -- python generate_from_lm.py \
+        --gpus=1 -- python generate_from_lm.py \
             EleutherAI/$model \
             $PROMPTS_PATH \
             $DIR/$model.jsonl \
