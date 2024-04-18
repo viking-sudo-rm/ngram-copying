@@ -29,7 +29,7 @@ To generate data from each model:
 ```bash
 gantry run \
     --workspace ai2/rusty-dawg \
-    --cluster allennlp-cirrascale \
+    --cluster ai2/allennlp-cirrascale \
     --venv base \
     --gpus=1 \
     --budget=ai2/allennlp \
