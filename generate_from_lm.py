@@ -33,10 +33,10 @@ def get_params_grid(args) -> dict[str, SamplingParams]:
         all_params[f"top_k={k}"] = SamplingParams(top_k=k, **kwargs)
     # Nucleus sampling.
     for p in args.top_p:
-        all_params[f"top_p={p}"] = Sampling(top_p=p, **kwargs)
+        all_params[f"top_p={p}"] = SamplingParams(top_p=p, **kwargs)
     # Modifying the temperature.
     for temp in args.temperature:
-        all_params[f"temp={temp}"] = Sampling(temperature=temp, **kwargs)
+        all_params[f"temp={temp}"] = SamplingParams(temperature=temp, **kwargs)
 
     # === Beam search is a bit special ===
     for b in args.beam:

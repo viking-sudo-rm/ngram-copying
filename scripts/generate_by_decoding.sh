@@ -22,7 +22,7 @@ printf "willm-topk" | gantry run \
         -k 20 80 160
 
 echo "=== topp ==="
-printf "willm-topk" | gantry run \
+printf "willm-topp" | gantry run \
     --workspace ai2/rusty-dawg \
     --cluster ai2/allennlp-cirrascale \
     --venv base \
