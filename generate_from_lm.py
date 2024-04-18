@@ -9,8 +9,12 @@ import json
 import torch
 from argparse import ArgumentParser
 import os
+import logging
 
 from vllm import LLM, SamplingParams
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 def get_params_grid(args) -> dict[str, SamplingParams]:
     """Get decoding parameters.
@@ -58,6 +62,13 @@ def write_jsonl(fh, model, all_outputs: dict):
                 fh.write(json.dumps(blob))
                 fh.write("\n")
 
+def filter_null(prompts):
+    original_len = len(prompts)
+    prompts = [p for p in prompts if len(p) == 0]
+    if len(prompts) != original_len:
+        log.warn(f"Filtered {len(prompts) != original_len} null prompts")
+    return prompts
+
 def parse_args():
     parser = ArgumentParser()
     parser.add_argument("model", type=str)
@@ -93,6 +104,7 @@ def main(args):
     with open(args.prompts_path) as fh:
         blobs = [json.loads(line) for line in fh.readlines()]
         full_prompts = [tokenizer.encode(blob["text"]) for blob in blobs]
+        full_prompts = filter_null(full_prompts)
 
     all_outputs = {}
     for plen in args.prompt_lengths:
