@@ -31,7 +31,7 @@ for idx in "${!SIZES[@]}"; do
             --n_tokens=$N_TOKENS \
             --sample
 done
-cat $DIR/*.jsonl > $OUT_DIR/models$SUFFIX.jsonl
+# cat $DIR/*.jsonl > $OUT_DIR/models$SUFFIX.jsonl
 
 
 # echo "\n"
