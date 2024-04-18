@@ -19,7 +19,7 @@ mkdir $DIR
 for idx in "${!SIZES[@]}"; do
     model="pythia-${SIZES[idx]}$SUFFIX"
     echo "===== $model ====="
-    gantry run \
+    printf "\n" | gantry run \
         --workspace ai2/rusty-dawg \
         --cluster ai2/allennlp-cirrascale \
         --venv base \
