@@ -64,9 +64,9 @@ def write_jsonl(fh, model, all_outputs: dict):
 
 def filter_null(prompts):
     original_len = len(prompts)
-    prompts = [p for p in prompts if len(p) == 0]
+    prompts = [p for p in prompts if len(p) != 0]
     if len(prompts) != original_len:
-        log.warn(f"Filtered {len(prompts) != original_len} null prompts")
+        log.warn(f"Filtered {original_len - len(prompts)} null prompts")
     return prompts
 
 def parse_args():

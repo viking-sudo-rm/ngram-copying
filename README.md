@@ -27,13 +27,7 @@ python sample_prompts_and_val.py --by_domain --n_samples=100 \
 To generate data from each model:
 
 ```bash
-gantry run \
-    --workspace ai2/rusty-dawg \
-    --cluster ai2/allennlp-cirrascale \
-    --venv base \
-    --gpus=1 \
-    --budget=ai2/allennlp \
-    -- scripts/generate_by_model.sh
+scripts/generate_from_lms.sh
 ```
 
 <details>
