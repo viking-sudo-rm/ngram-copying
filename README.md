@@ -1,5 +1,9 @@
 # N-gram Copying Experiments
 
+## Motivation
+
+This library uses CDAWGs (data structures for fast search in massive text corpora) to study the copying behavior of large language models. Specifically, we use a CDAWG built on the Pile to study the copying behavior of the Pythia models.
+
 ## Usage
 
 First set the environment variable:
@@ -60,16 +64,11 @@ python generate_from_lm.py \
 Models: 70m, 160m, 410m, 1b, 1.4b, 2.8b, 6.9b, 12b  ([more information](https://huggingface.co/EleutherAI/pythia-6.9b))
 </details>
 
-### Generating with Varying Decoding Strategies
-
-```bash
-scripts/generate_by_decoding.sh
-```
-
 ### Feeding Generated Data Through the API
 
+First start the Rusty DAWG server. Then, to run the full analysis (about 48 hours), you can run:
 ```bash
-python query_cdawgs.py \
-    $ROOT/lm-generations/models.jsonl \
-    $ROOT/results/models.json
+scripts/query_cdawgs.sh
 ```
+
+You can also copy and paste specific commands from that script to just run parts of it.

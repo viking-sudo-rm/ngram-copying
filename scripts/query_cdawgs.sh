@@ -22,6 +22,13 @@ python query_cdawgs.py \
     --batch_size $BATCH_SIZE \
     --read_timeout $TIMEOUT
 
+# Deduped version of by-domain.
+python query_cdawgs.py \
+    $ROOT/lm-generations/by-domain/pythia-12b.jsonl \
+    $ROOT/results/by-domain-deduped.json \
+    --batch_size $BATCH_SIZE \
+    --read_timeout $TIMEOUT
+
 # Pass iid val through the CDAWGs.
 python query_cdawgs.py \
     $ROOT/data/iid/val.jsonl \
@@ -33,13 +40,6 @@ python query_cdawgs.py \
 python query_cdawgs.py \
     $ROOT/lm-generations/by-model.jsonl \
     $ROOT/results/by-model.json \
-    --batch_size $BATCH_SIZE \
-    --read_timeout $TIMEOUT
-
-# Pass by-model-deduped data for Pythia-12b through CDAWGs.
-python query_cdawgs.py \
-    $ROOT/lm-generations/by-model-deduped/pythia-12b.jsonl \
-    $ROOT/results/by-model-deduped.json \
     --batch_size $BATCH_SIZE \
     --read_timeout $TIMEOUT
 
