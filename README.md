@@ -11,7 +11,7 @@ export ROOT=/net/nfs.cirrascale/allennlp/willm/ngram-copying
 
 Prompts can be sampled from the Pile via:
 ```
-python sample_prompts_and_val.py --n_samples=10000
+python sample_prompts_and_val.py --n_samples=500
 ```
 
 Or to generate models with 100 samples per domain (besides one where there are not 100):
@@ -24,11 +24,21 @@ python sample_prompts_and_val.py --by_domain --n_samples=100 \
 
 ### Generating Data from Models
 
-To generate data from each model:
-
+To generate in domain (can actually do for just one model):
 ```bash
-scripts/generate_from_lms.sh
+scripts/generate_by_model.sh by-domain by-domain
 ```
+
+To generate by-model from IID data:
+```bash
+scripts/generate_by_model.sh iid by-model
+```
+
+To generate by decoding:
+```bash
+TODO: Generate by decoding
+```
+
 
 <details>
 <summary>Example of how to generate from a specific model</summary>
@@ -45,10 +55,16 @@ python generate_from_lm.py \
 Models: 70m, 160m, 410m, 1b, 1.4b, 2.8b, 6.9b, 12b  ([more information](https://huggingface.co/EleutherAI/pythia-6.9b))
 </details>
 
+### Generating with Varying Decoding Strategies
+
+```bash
+scripts/generate_by_decoding.sh
+```
+
 ### Feeding Generated Data Through the API
 
 ```bash
 python query_cdawgs.py \
-    /net/nfs.cirrascale/allennlp/willm/ngram-copying/gen.jsonl \
-    /net/nfs.cirrascale/allennlp/willm/ngram-copying/results/gen.json
+    $ROOT/lm-generations/models.jsonl \
+    $ROOT/results/models.json
 ```

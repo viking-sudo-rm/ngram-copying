@@ -1,21 +1,20 @@
 #!/bin/bash
 
 ROOT=${ROOT:-"/net/nfs.cirrascale/allennlp/willm/ngram-copying"}
-PROMPTS_PATH=$ROOT/data/by-domain/prompts.jsonl
+DATA=${1:-"iid"}
+SAVE=${2:-"by-model"}
+PROMPTS_PATH=$ROOT/data/$DATA/prompts.jsonl
 OUT_DIR=$ROOT/lm-generations
 N_TOKENS=1000
-
 SUFFIX=""
-# SUFFIX="-deduped"
-DIR=$OUT_DIR/models$SUFFIX
 
 # Fail if already exists.
 mkdir $OUT_DIR
 
 
-echo "========== Generating 'models$SUFFIX' =========="
+echo "========== Generating '$SAVE' =========="
 SIZES=("70m" "160m" "410m" "1b" "1.4b" "2.8b" "6.9b" "12b")
-mkdir $DIR
+mkdir $OUT_DIR/$SAVE
 for idx in "${!SIZES[@]}"; do
     model="pythia-${SIZES[idx]}$SUFFIX"
     echo "===== $model ====="
@@ -27,7 +26,7 @@ for idx in "${!SIZES[@]}"; do
         --gpus=1 -- python generate_from_lm.py \
             EleutherAI/$model \
             $PROMPTS_PATH \
-            $DIR/$model.jsonl \
+            $OUT_DIR/$SAVE/$model.jsonl \
             --n_tokens=$N_TOKENS \
             --sample
 done

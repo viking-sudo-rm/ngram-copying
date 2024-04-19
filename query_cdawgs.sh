@@ -3,37 +3,49 @@
 # Probably a lot of this is network overhead and bottleneck (maybe batching would help?)
 # Normally, the DAWG seems to be able to run on disk comfortably at 1000 tok/sec
 
-# Pass 'val' through the CDAWGs.
-python query_cdawgs.py \
-    /net/nfs.cirrascale/allennlp/willm/ngram-copying/validation/val-20-tokens.jsonl \
-    /net/nfs.cirrascale/allennlp/willm/ngram-copying/results/val-20.json \
-    --batch_size 5 \
-    --read_timeout 200
+ROOT=${ROOT:-"/net/nfs.cirrascale/allennlp/willm/ngram-copying"}
+BATCH_SIZE=100
+TIMEOUT=2000
 
-# Pass 'pythia-12b' through the CDAWGs.
+# Pass by-domain val through the CDAWGs.
 python query_cdawgs.py \
-    /net/nfs.cirrascale/allennlp/willm/ngram-copying/lm-generations/models/pythia-12b.jsonl \
-    /net/nfs.cirrascale/allennlp/willm/ngram-copying/results/models/pythia-12b.json \
-    --batch_size 5 \
-    --read_timeout 200
+    $ROOT/data/by-domain/val.jsonl \
+    $ROOT/results/val-domain.json \
+    --batch_size $BATCH_SIZE \
+    --read_timeout $TIMEOUT
 
-# Pass 'models' through the CDAWGs.
+# TODO: mv to by-domain folder and iid folder 
+# Get by-domain results on Pythia-12b.
 python query_cdawgs.py \
-    /net/nfs.cirrascale/allennlp/willm/ngram-copying/lm-generations/models.jsonl \
-    /net/nfs.cirrascale/allennlp/willm/ngram-copying/results/models.json \
-    --batch_size 5 \
-    --read_timeout 200
+    $ROOT/lm-generations/by-domain/pythia-12b.jsonl \
+    $ROOT/results/by-domain.json \
+    --batch_size $BATCH_SIZE \
+    --read_timeout $TIMEOUT
 
-# Pass 'dedup-models' through the CDAWGs.
+# Pass iid val through the CDAWGs.
 python query_cdawgs.py \
-    /net/nfs.cirrascale/allennlp/willm/ngram-copying/lm-generations/dedup-models.jsonl \
-    /net/nfs.cirrascale/allennlp/willm/ngram-copying/results/dedup-models.json \
-    --batch_size 5 \
-    --read_timeout 200
+    $ROOT/data/iid/val.jsonl \
+    $ROOT/results/val-iid.json \
+    --batch_size $BATCH_SIZE \
+    --read_timeout $TIMEOUT
 
-# Pass 'decoding' through the CDAWGs.
+# Pass aggregated by-model data through CDAWGs.
 python query_cdawgs.py \
-    /net/nfs.cirrascale/allennlp/willm/ngram-copying/lm-generations/decoding.jsonl \
-    /net/nfs.cirrascale/allennlp/willm/ngram-copying/results/decoding.json \
-    --batch_size 5 \
-    --read_timeout 200
+    $ROOT/lm-generations/by-model.jsonl \
+    $ROOT/results/by-model.json \
+    --batch_size $BATCH_SIZE \
+    --read_timeout $TIMEOUT
+
+# Pass by-model-deduped data for Pythia-12b through CDAWGs.
+python query_cdawgs.py \
+    $ROOT/lm-generations/by-model-deduped/pythia-12b.jsonl \
+    $ROOT/results/by-model-deduped.json \
+    --batch_size $BATCH_SIZE \
+    --read_timeout $TIMEOUT
+
+# Pass decoding data through the CDAWGs.
+python query_cdawgs.py \
+    $ROOT/lm-generations/by-decoding/pythia-12b.jsonl \
+    $ROOT/results/by-decoding.json \
+    --batch_size $BATCH_SIZE \
+    --read_timeout $TIMEOUT
