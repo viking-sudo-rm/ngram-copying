@@ -36,7 +36,7 @@ scripts/generate_by_model.sh iid by-model
 
 To generate by decoding:
 ```bash
-TODO: Generate by decoding
+scripts/generate_by_decoding.sh
 ```
 
 

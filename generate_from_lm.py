@@ -80,7 +80,6 @@ def parse_args():
                         help="Prefix length of prompts to use, in tokens")
 
     # === Decoding options ===
-    parser.add_argument("--greedy", action="store_true", help="Try greedy decoding")
     parser.add_argument("--sample", action="store_true", help="Try naive sampling decoding")
     parser.add_argument("-t", "--temperature", type=float, nargs="+", default=[],
                         help="List of temperatures to decode with")
