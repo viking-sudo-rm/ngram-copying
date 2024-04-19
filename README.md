@@ -24,12 +24,17 @@ python sample_prompts_and_val.py --by_domain --n_samples=100 \
 
 ### Generating Data from Models
 
-To generate in domain (can actually do for just one model):
+To generate by domain (only use Pythia-12b though):
 ```bash
 scripts/generate_by_model.sh by-domain by-domain
 ```
 
-To generate by-model from IID data:
+To do the same for deduped (only use Pythia-12b though):
+```bash
+SUFFIX="-deduped" scripts/generate_by_model.sh by-domain by-domain-deduped
+```
+
+To generate by model (from IID data):
 ```bash
 scripts/generate_by_model.sh iid by-model
 ```

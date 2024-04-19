@@ -3,16 +3,15 @@
 ROOT=${ROOT:-"/net/nfs.cirrascale/allennlp/willm/ngram-copying"}
 DATA=${1:-"iid"}
 SAVE=${2:-"by-model"}
+SUFFIX=${SUFFIX:""}
+
 PROMPTS_PATH=$ROOT/data/$DATA/prompts.jsonl
 OUT_DIR=$ROOT/lm-generations
 N_TOKENS=1000
-SUFFIX=""
-
-# Fail if already exists.
-mkdir $OUT_DIR
-
 
 echo "========== Generating '$SAVE' =========="
+mkdir $OUT_DIR
+
 SIZES=("70m" "160m" "410m" "1b" "1.4b" "2.8b" "6.9b" "12b")
 mkdir $OUT_DIR/$SAVE
 for idx in "${!SIZES[@]}"; do
