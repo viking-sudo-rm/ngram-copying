@@ -5,8 +5,8 @@ PROMPTS_PATH=$ROOT/data/iid/prompts.jsonl
 OUT_DIR=$ROOT/lm-generations
 N_TOKENS=1000
 
-echo "========== Generating 'decoding' =========="
-mkdir $OUT_DIR/decoding
+echo "========== Generating 'by-decoding' =========="
+mkdir $OUT_DIR/by-decoding
 
 echo "=== topk ==="
 printf "willm-topk" | gantry run \
@@ -17,7 +17,7 @@ printf "willm-topk" | gantry run \
     --gpus=1 -- python generate_from_lm.py \
         EleutherAI/pythia-12b \
         $PROMPTS_PATH \
-        $OUT_DIR/decoding/topk.jsonl \
+        $OUT_DIR/by-decoding/topk.jsonl \
         --n_tokens=$N_TOKENS \
         -k 20 80 160
 
@@ -30,7 +30,7 @@ printf "willm-topp" | gantry run \
     --gpus=1 -- python generate_from_lm.py \
         EleutherAI/pythia-12b \
         $PROMPTS_PATH \
-        $OUT_DIR/decoding/topp.jsonl \
+        $OUT_DIR/by-decoding/topp.jsonl \
         --n_tokens=$N_TOKENS \
         -p 0.85 0.90 0.95
 
@@ -43,7 +43,7 @@ printf "willm-temp" | gantry run \
     --gpus=1 -- python generate_from_lm.py \
         EleutherAI/pythia-12b \
         $PROMPTS_PATH \
-        $OUT_DIR/decoding/temp.jsonl \
+        $OUT_DIR/by-decoding/temp.jsonl \
         --n_tokens=$N_TOKENS \
         -t 0.00 0.85 0.90 0.95 1.05 1.10 2.00
 
@@ -57,8 +57,8 @@ printf "willm-temp" | gantry run \
 #     --gpus=1 -- python generate_from_lm.py \
 #         EleutherAI/pythia-12b \
 #         $PROMPTS_PATH \
-#         $OUT_DIR/decoding/beam.jsonl \
+#         $OUT_DIR/by-decoding/beam.jsonl \
 #         --n_tokens=$N_TOKENS \
 #         -b 2 4 6 8
 
-# cat $OUT_DIR/decoding/*.jsonl > $OUT_DIR/decoding.jsonl
+# cat $OUT_DIR/by-decoding/*.jsonl > $OUT_DIR/by-decoding.jsonl
