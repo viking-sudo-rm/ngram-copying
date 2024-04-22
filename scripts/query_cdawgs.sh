@@ -5,7 +5,7 @@
 
 ROOT=${ROOT:-"/net/nfs.cirrascale/allennlp/willm/ngram-copying"}
 BATCH_SIZE=100
-TIMEOUT=2000
+TIMEOUT=9999999999
 
 # Pass by-domain val through the CDAWGs.
 python query_cdawgs.py \
