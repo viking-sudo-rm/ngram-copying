@@ -40,7 +40,8 @@ def get_params_grid(args) -> dict[str, SamplingParams]:
 
     # === Beam search is a bit special ===
     for b in args.beam:
-        all_params[f"beam={b}"] = SamplingParams(temperature=0., use_beam_search=True, best_of=b, **kwargs)
+        # See https://github.com/vllm-project/vllm/issues/975
+        all_params[f"beam={b}"] = SamplingParams(temperature=0., use_beam_search=True, n=b, **kwargs)
 
     return all_params
 

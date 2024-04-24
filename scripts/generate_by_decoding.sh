@@ -9,7 +9,7 @@ echo "========== Generating 'by-decoding' =========="
 mkdir $OUT_DIR/by-decoding
 
 echo "=== topk ==="
-printf "willm-topk" | gantry run \
+printf "topk" | gantry run \
     --workspace ai2/rusty-dawg \
     --cluster ai2/allennlp-cirrascale \
     --venv base \
@@ -22,7 +22,7 @@ printf "willm-topk" | gantry run \
         -k 20 80 160
 
 echo "=== topp ==="
-printf "willm-topp" | gantry run \
+printf "topp" | gantry run \
     --workspace ai2/rusty-dawg \
     --cluster ai2/allennlp-cirrascale \
     --venv base \
@@ -35,7 +35,7 @@ printf "willm-topp" | gantry run \
         -p 0.85 0.90 0.95
 
 echo "=== temp ==="
-printf "willm-temp" | gantry run \
+printf "temp" | gantry run \
     --workspace ai2/rusty-dawg \
     --cluster ai2/allennlp-cirrascale \
     --venv base \
@@ -49,7 +49,7 @@ printf "willm-temp" | gantry run \
 
 # FIXME: Error here
 # echo "=== beam ==="
-printf "willm-beam" | gantry run \
+printf "beam" | gantry run \
     --workspace ai2/rusty-dawg \
     --cluster ai2/allennlp-cirrascale \
     --venv base \
