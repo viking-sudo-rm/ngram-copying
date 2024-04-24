@@ -24,7 +24,7 @@ python query_cdawgs.py \
 
 # Deduped version of by-domain.
 python query_cdawgs.py \
-    $ROOT/lm-generations/by-domain/pythia-12b.jsonl \
+    $ROOT/lm-generations/by-domain-deduped/pythia-12b-deduped.jsonl \
     $ROOT/results/by-domain-deduped.json \
     --batch_size $BATCH_SIZE \
     --read_timeout $TIMEOUT
