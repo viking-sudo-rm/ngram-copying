@@ -33,10 +33,10 @@ def get_json(args, blobs):
         tokens = []
         for blob in blobs:
             tokens.append(blob["tokens"])
-            # Remove the prompt from the text to query.
-            if "prompt" in blob:
-                prompt_len = len(blob["prompt"])
-                tokens[-1] = tokens[-1][prompt_len:]
+            # Note: VLLM doesn't include the prompt in the generated text!
+            # if "prompt" in blob:
+            #     prompt_len = len(blob["prompt"])
+            #     tokens[-1] = tokens[-1][prompt_len:]
         return {"tokens": tokens}
 
 async def main(args):

@@ -8,13 +8,19 @@ BATCH_SIZE=100
 TIMEOUT=9999999999
 
 # Pass by-domain val through the CDAWGs.
-python query_cdawgs.py \
-    $ROOT/data/by-domain/val.jsonl \
-    $ROOT/results/val-domain.json \
-    --batch_size $BATCH_SIZE \
-    --read_timeout $TIMEOUT
+# python query_cdawgs.py \
+#     $ROOT/data/by-domain/val.jsonl \
+#     $ROOT/results/val-domain.json \
+#     --batch_size $BATCH_SIZE \
+#     --read_timeout $TIMEOUT
 
-# TODO: mv to by-domain folder and iid folder 
+# Pass iid val through the CDAWGs.
+# python query_cdawgs.py \
+#     $ROOT/data/iid/val.jsonl \
+#     $ROOT/results/val-iid.json \
+#     --batch_size $BATCH_SIZE \
+#     --read_timeout $TIMEOUT
+
 # Get by-domain results on Pythia-12b.
 python query_cdawgs.py \
     $ROOT/lm-generations/by-domain/pythia-12b.jsonl \
@@ -29,13 +35,6 @@ python query_cdawgs.py \
     --batch_size $BATCH_SIZE \
     --read_timeout $TIMEOUT
 
-# Pass iid val through the CDAWGs.
-python query_cdawgs.py \
-    $ROOT/data/iid/val.jsonl \
-    $ROOT/results/val-iid.json \
-    --batch_size $BATCH_SIZE \
-    --read_timeout $TIMEOUT
-
 # Pass aggregated by-model data through CDAWGs.
 python query_cdawgs.py \
     $ROOT/lm-generations/by-model.jsonl \
@@ -44,8 +43,9 @@ python query_cdawgs.py \
     --read_timeout $TIMEOUT
 
 # Pass decoding data through the CDAWGs.
-python query_cdawgs.py \
-    $ROOT/lm-generations/by-decoding/pythia-12b.jsonl \
-    $ROOT/results/by-decoding.json \
-    --batch_size $BATCH_SIZE \
-    --read_timeout $TIMEOUT
+# FIXME: Get beam search data.
+# python query_cdawgs.py \
+#     $ROOT/lm-generations/by-decoding/pythia-12b.jsonl \
+#     $ROOT/results/by-decoding.json \
+#     --batch_size $BATCH_SIZE \
+#     --read_timeout $TIMEOUT

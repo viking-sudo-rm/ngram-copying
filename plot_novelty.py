@@ -9,63 +9,12 @@ import os
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
-COLORS = mcolors.CSS4_COLORS
+from src.data import CorpusData, LMGenerations, Results
+
 plt.rcParams.update({'font.size': 13})
 
-MODELS = ["EleutherAI/pythia-70m", "EleutherAI/pythia-160m", "EleutherAI/pythia-410m",
-          "EleutherAI/pythia-1b", "EleutherAI/pythia-1.4b", "EleutherAI/pythia-2.8b",
-          "EleutherAI/pythia-6.9b", "EleutherAI/pythia-12b"]
-
-class CorpusData(NamedTuple):
-    prompts_iid: list
-    val_iid: list
-    prompts_by_domain: list
-    val_by_domain: list
-
-    @classmethod
-    def load(cls, root):
-        with open(os.path.join(root, "data/iid/prompts.jsonl")) as fh:
-            prompts_iid = [json.loads(line) for line in fh]
-        with open(os.path.join(root, "data/iid/val.jsonl")) as fh:
-            val_iid = [json.loads(line) for line in fh]
-        with open(os.path.join(root, "data/by-domain/prompts.jsonl")) as fh:
-            prompts_by_domain = [json.loads(line) for line in fh]
-        with open(os.path.join(root, "data/by-domain/val.jsonl")) as fh:
-            val_by_domain = [json.loads(line) for line in fh]
-        return cls(prompts_iid, val_iid, prompts_by_domain, val_by_domain)
-
-class LMGenerations(NamedTuple):
-    by_domain: list
-    by_model: list
-    pythia_12b: list
-
-    @classmethod
-    def load(cls, root):
-        with open(os.path.join(root, "lm-generations/by-domain/pythia-12b.jsonl")) as fh:
-            by_domain = [json.loads(line) for line in fh]
-        with open(os.path.join(root, "lm-generations/by-model.jsonl")) as fh:
-            by_model = [json.loads(line) for line in fh]
-        with open(os.path.join(root, "lm-generations/by-model/pythia-12b.jsonl")) as fh:
-            pythia_12b = [json.loads(line) for line in fh]
-        return cls(by_domain, by_model, pythia_12b)
-
-class Results(NamedTuple):
-    val_by_domain: dict
-    val_iid: dict
-    by_domain: dict
-    by_model: dict
-
-    @classmethod
-    def load(cls, root):
-        with open(os.path.join(root, "results/val.json")) as fh:
-            val_by_domain = json.load(fh)
-        with open(os.path.join(root, "results/val-iid.json")) as fh:
-            val_iid = json.load(fh)
-        with open(os.path.join(root, "results/by-domain.json")) as fh:
-            by_domain = json.load(fh)
-        with open(os.path.join(root, "results/by-model.json")) as fh:
-            by_model = json.load(fh)
-        return cls(val_by_domain, val_iid, by_domain, by_model)
+MODELS = ["pythia-70m", "pythia-160m", "pythia-410m", "pythia-1b", "pythia-1.4b", "pythia-2.8b",
+          "pythia-6.9b", "pythia-12b"]
 
 def flatten(lists):
     return [item for row in lists for item in row]
@@ -123,8 +72,9 @@ def plot_model(args, model="EleutherAI/pythia-12b"):
     plt.savefig(f"plots/by-model/{clean_model_name(model)}.pdf")
 
 def plot_by_model(args, plen=1):
-    plt.figure(figsize=(10, 5))
-    fig, (ax1, ax2) = plt.subplots(1, 2)
+    os.makedirs("plots/by-model", exist_ok=True)
+    # plt.figure(figsize=(10, 5))
+    # fig, (ax1, ax2) = plt.subplots(1, 2)
     # fig.suptitle("n-gram novelty and non-novel suffix length by model size")
 
     blue_palette = plt.cm.Blues(np.linspace(0.2, 1, len(MODELS)))
@@ -139,16 +89,12 @@ def plot_by_model(args, plen=1):
         plot_lengths[model].append(lengths)
 
     sizes, prop_unique = get_proportion_unique(flatten(plot_lengths["val"]), max_n=args.max_n)
-    ax1.plot(sizes, prop_unique, label="val", color="gray")
+    plt.plot(sizes, prop_unique, label="val", color="gray", linestyle="--")
     for color, key in zip(blue_palette, MODELS):
         sizes, prop_unique = get_proportion_unique(flatten(plot_lengths[key]), max_n=args.max_n)
-        ax1.plot(sizes, prop_unique, label=key.split("-")[-1], color=color)
-    ax1.set_title("n-gram novelty")
-    ax1.set(xlabel="n-gram size", ylabel="% novel")
-    plt.sca(ax1)
-    plt.xticks(list(range(1, args.max_n + 1)))
-    plt.ylim([0, 1])
-    plt.legend()
+        plt.plot(sizes, prop_unique, label=key.split("-")[-1], color=color)
+    format_novelty_plot(plt, max_n=args.max_n)
+    plt.savefig("plots/by-model/curves.pdf")
     
     sizes = []
     mean_lengths = []
@@ -158,48 +104,53 @@ def plot_by_model(args, plen=1):
         sizes.append(clean_size(model.split("-")[-1]))
         mean_lengths.append(np.mean(flatten(lengths)))
 
-    ax2.set_title("non-novel suf len")
-    ax2.scatter(sizes, mean_lengths, linestyle="-", color="gray")
-    ax2.set(xlabel="model size", ylabel="mean non-novel suffix length")
-    plt.sca(ax2)
+    plt.figure()
+    plt.title("non-novel suffix len")
+    plt.scatter(sizes, mean_lengths, linestyle="-")
+    plt.xlabel("model size")
+    plt.ylabel("mean non-novel suffix len")
+    # ax2.set(xlabel="model size", ylabel="mean non-novel suffix length")
+    # plt.sca(ax2)
     plt.xscale("log")
+    plt.tight_layout()
+    plt.savefig("plots/by-model/scatter.pdf")
 
-    fig.tight_layout()
-    plt.savefig("plots/by-model.pdf")
-
-def plot_by_domain(args, plen=1):
-    print(f"=== Plotting with plen={plen} ===")
+def plot_by_domain(args):
+    os.makedirs("plots/by-domain", exist_ok=True)
+    lengths_by_domain = defaultdict(list)
+    domains = set()
 
     # First compute for validation set.
-    val_lengths_by_domain = defaultdict(list)
     for doc, lengths in zip(data.val_by_domain, results.val_by_domain["lengths"]):
         domain = doc["meta"]["pile_set_name"]
-        val_lengths_by_domain[domain].append(lengths)
-    print("# of val domains:", len(val_lengths_by_domain))
+        lengths_by_domain[domain, "val"].append(lengths)
+        domains.add(domain)
 
     # Next compute for CDAWG outputs.
-    lengths_by_domain = defaultdict(list)
     for doc, lengths in zip(lmg.by_domain, results.by_domain["lengths"]):
-        if doc["meta"]["prompt_len"] != plen:
-            continue
+        plen = doc["meta"]["prompt_len"]
         pidx = doc["meta"]["prompt_idx"]
         prompt = data.prompts_by_domain[pidx]
         domain = prompt["meta"]["pile_set_name"]
-        lengths_by_domain[domain].append(lengths)
-    print("# of domains:", len(lengths_by_domain))
+        lengths_by_domain[domain, plen].append(lengths)
+        domains.add(domain)
 
-    plt.figure()
-    colors = list(COLORS.values())
-    for color, (domain, lengths) in zip(colors, lengths_by_domain.items()):
-        val_lengths = val_lengths_by_domain[domain]
+    plens = [1, 10, 100]
+    colors = plt.cm.Oranges(np.linspace(0.2, 1, len(plens)))
+
+    for domain in domains:
+        plt.figure()
+        val_lengths = lengths_by_domain[domain, "val"]
         val_sizes, val_prop_unique = get_proportion_unique(flatten(val_lengths), max_n=args.max_n)
-        plt.plot(val_sizes, val_prop_unique, linestyle="--", color=color)
-        sizes, prop_unique = get_proportion_unique(flatten(lengths), max_n=args.max_n)
-        plt.plot(sizes, prop_unique, label=domain, color=color)
-    plt.title(f"n-gram novelty by domain, p={plen}")
-    format_novelty_plot(plt, max_n=args.max_n)
-    os.makedirs("plots/by-domain", exist_ok=True)
-    plt.savefig(f"plots/by-domain/domain-{plen}.pdf")
+        plt.plot(val_sizes, val_prop_unique, linestyle="--", color="gray")
+        for color, plen in zip(colors, plens):
+            lengths = lengths_by_domain[domain, plen]
+            sizes, prop_unique = get_proportion_unique(flatten(lengths), max_n=args.max_n)
+            plt.plot(sizes, prop_unique, label=f"p={plen}", color=color)
+        plt.title(f"n-gram novelty for {domain}")
+        format_novelty_plot(plt, max_n=args.max_n)
+        plt.savefig(f"plots/by-domain/{domain}.pdf")
+        plt.close()
 
 if __name__ == "__main__":
     args = parse_args()
@@ -207,9 +158,6 @@ if __name__ == "__main__":
     lmg = LMGenerations.load(args.root)
     results = Results.load(args.root)
 
+    plot_model(args, model="EleutherAI/pythia-12b")
     plot_by_model(args)
-    for model in MODELS:
-        plot_model(args, model)
-
-    # for plen in [1, 10, 100]:
-    #     plot_by_domain(args, plen=1)
+    plot_by_domain(args)

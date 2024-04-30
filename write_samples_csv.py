@@ -16,7 +16,6 @@ def main(args):
     tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
     with open(args.jsonl_path) as fh:
         lines = [json.loads(line) for line in fh]
-    breakpoint()
     df = pd.DataFrame({
         "model": [line["meta"]["model"] for line in lines],
         "prompt": [tokenizer.decode(line["prompt"]) for line in lines],
@@ -25,7 +24,7 @@ def main(args):
         "text len": [len(line["tokens"]) for line in lines],
         "decoding": [json.dumps(line["meta"]["decoding"]) for line in lines],
     })
-    df.to_csv(args.csv_path)
+    df.to_csv(args.csv_path, escapechar="\\")
 
 if __name__ == "__main__":
     main(parse_args())

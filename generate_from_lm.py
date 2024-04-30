@@ -110,6 +110,7 @@ def main(args):
     for plen in args.prompt_lengths:
         for decoding, params in all_params.items():
             prompts = [p[:plen] for p in full_prompts]
+            breakpoint()
             outputs = model.generate(prompt_token_ids=prompts, sampling_params=params)
             all_outputs[decoding, plen] = outputs
 
