@@ -21,29 +21,29 @@ TIMEOUT=9999999999
 #     --batch_size $BATCH_SIZE \
 #     --read_timeout $TIMEOUT
 
-# Get by-domain results on Pythia-12b.
+echo "=== Generating by-domain results ==="
 python query_cdawgs.py \
     $ROOT/lm-generations/by-domain/pythia-12b.jsonl \
     $ROOT/results/by-domain.json \
     --batch_size $BATCH_SIZE \
     --read_timeout $TIMEOUT
 
-# Deduped version of by-domain.
+echo "=== Generating by-domain-deduped results ==="
 python query_cdawgs.py \
     $ROOT/lm-generations/by-domain-deduped/pythia-12b-deduped.jsonl \
     $ROOT/results/by-domain-deduped.json \
     --batch_size $BATCH_SIZE \
     --read_timeout $TIMEOUT
 
-# Pass aggregated by-model data through CDAWGs.
+echo "=== Generating by-model results ==="
 python query_cdawgs.py \
     $ROOT/lm-generations/by-model.jsonl \
     $ROOT/results/by-model.json \
     --batch_size $BATCH_SIZE \
     --read_timeout $TIMEOUT
 
-# Pass decoding data through the CDAWGs.
 # FIXME: Get beam search data.
+# echo "=== Generating by-decoding results ==="
 # python query_cdawgs.py \
 #     $ROOT/lm-generations/by-decoding/pythia-12b.jsonl \
 #     $ROOT/results/by-decoding.json \

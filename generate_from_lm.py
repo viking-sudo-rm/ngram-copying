@@ -79,6 +79,8 @@ def parse_args():
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--prompt_lengths", type=int, nargs="+", default=[1, 10, 100],
                         help="Prefix length of prompts to use, in tokens")
+    parser.add_argument("--one_prompt", action="store_true",
+                        help="Only use one prompt. Add if p=0 and deterministic.")
 
     # === Decoding options ===
     parser.add_argument("--sample", action="store_true", help="Try naive sampling decoding")
@@ -98,6 +100,7 @@ def main(args):
     args.device = "cuda" if torch.cuda.is_available() else "cpu"
     model = LLM(model=args.model, seed=args.seed)
     tokenizer = model.get_tokenizer()
+    eos = tokenizer.eos_token
     all_params = get_params_grid(args)
 
     # Load all the prompts from JSONL.
@@ -109,9 +112,14 @@ def main(args):
     all_outputs = {}
     for plen in args.prompt_lengths:
         for decoding, params in all_params.items():
-            prompts = [p[:plen] for p in full_prompts]
-            breakpoint()
-            outputs = model.generate(prompt_token_ids=prompts, sampling_params=params)
+            if plen != 0:
+                prompts = [p[:plen] for p in full_prompts]
+                outputs = model.generate(prompt_token_ids=prompts, sampling_params=params)
+            elif args.one_prompt:
+                outputs = model.generate([eos])
+            else:
+                outputs = model.generate([eos for _ in prompts])
+            
             all_outputs[decoding, plen] = outputs
 
     with open(args.save_path, "w") as fh:

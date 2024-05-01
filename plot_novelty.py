@@ -15,6 +15,10 @@ plt.rcParams.update({'font.size': 13})
 
 MODELS = ["pythia-70m", "pythia-160m", "pythia-410m", "pythia-1b", "pythia-1.4b", "pythia-2.8b",
           "pythia-6.9b", "pythia-12b"]
+PLENS = [1, 10, 100]
+
+BLUES = plt.cm.Blues(np.linspace(0.2, 1, len(MODELS)))
+ORANGES = plt.cm.Oranges(np.linspace(0.2, 1, len(PLENS)))
 
 def flatten(lists):
     return [item for row in lists for item in row]
@@ -54,31 +58,29 @@ def format_novelty_plot(plt, max_n: int = 10):
     plt.ylim([0, 1])
     plt.tight_layout()
 
-def plot_model(args, model="EleutherAI/pythia-12b"):
+def plot_model(args, model="EleutherAI/pythia-12b", name="Pythia-12B"):
     plot_lengths = defaultdict(list)
     plot_lengths["val"] = results.val_iid["lengths"]
     for doc, lengths in zip(lmg.by_model, results.by_model["lengths"]):
         if doc["meta"]["model"] != model:
             continue
         plen = doc["meta"]["prompt_len"]
-        plot_lengths[f"p={plen}"].append(lengths)
+        plot_lengths[plen].append(lengths)
 
     plt.figure()
-    for key, lengths in plot_lengths.items():
-        sizes, prop_unique = get_proportion_unique(flatten(lengths), max_n=args.max_n)
-        plt.plot(sizes, prop_unique, label=key)
+    sizes, prop_unique = get_proportion_unique(flatten(plot_lengths["val"]), max_n=args.max_n)
+    plt.plot(sizes, prop_unique, linestyle="--", color="gray", label="val")
+    for color, plen in zip(ORANGES, PLENS):
+        sizes, prop_unique = get_proportion_unique(flatten(plot_lengths[plen]), max_n=args.max_n)
+        plt.plot(sizes, prop_unique, color=color, label=f"p={plen}")
     format_novelty_plot(plt, max_n=args.max_n)
+    plt.title(f"n-gram novelty of {name}")
+
     os.makedirs("plots/by-model", exist_ok=True)
     plt.savefig(f"plots/by-model/{clean_model_name(model)}.pdf")
 
 def plot_by_model(args, plen=1):
     os.makedirs("plots/by-model", exist_ok=True)
-    # plt.figure(figsize=(10, 5))
-    # fig, (ax1, ax2) = plt.subplots(1, 2)
-    # fig.suptitle("n-gram novelty and non-novel suffix length by model size")
-
-    blue_palette = plt.cm.Blues(np.linspace(0.2, 1, len(MODELS)))
-    # baseline_orange = '#FFA500'
     
     plot_lengths = defaultdict(list)
     plot_lengths["val"] = results.val_iid["lengths"]
@@ -90,7 +92,7 @@ def plot_by_model(args, plen=1):
 
     sizes, prop_unique = get_proportion_unique(flatten(plot_lengths["val"]), max_n=args.max_n)
     plt.plot(sizes, prop_unique, label="val", color="gray", linestyle="--")
-    for color, key in zip(blue_palette, MODELS):
+    for color, key in zip(BLUES, MODELS):
         sizes, prop_unique = get_proportion_unique(flatten(plot_lengths[key]), max_n=args.max_n)
         plt.plot(sizes, prop_unique, label=key.split("-")[-1], color=color)
     format_novelty_plot(plt, max_n=args.max_n)
@@ -109,8 +111,6 @@ def plot_by_model(args, plen=1):
     plt.scatter(sizes, mean_lengths, linestyle="-")
     plt.xlabel("model size")
     plt.ylabel("mean non-novel suffix len")
-    # ax2.set(xlabel="model size", ylabel="mean non-novel suffix length")
-    # plt.sca(ax2)
     plt.xscale("log")
     plt.tight_layout()
     plt.savefig("plots/by-model/scatter.pdf")
@@ -135,15 +135,12 @@ def plot_by_domain(args):
         lengths_by_domain[domain, plen].append(lengths)
         domains.add(domain)
 
-    plens = [1, 10, 100]
-    colors = plt.cm.Oranges(np.linspace(0.2, 1, len(plens)))
-
     for domain in domains:
         plt.figure()
         val_lengths = lengths_by_domain[domain, "val"]
         val_sizes, val_prop_unique = get_proportion_unique(flatten(val_lengths), max_n=args.max_n)
         plt.plot(val_sizes, val_prop_unique, linestyle="--", color="gray")
-        for color, plen in zip(colors, plens):
+        for color, plen in zip(ORANGES, PLENS):
             lengths = lengths_by_domain[domain, plen]
             sizes, prop_unique = get_proportion_unique(flatten(lengths), max_n=args.max_n)
             plt.plot(sizes, prop_unique, label=f"p={plen}", color=color)
