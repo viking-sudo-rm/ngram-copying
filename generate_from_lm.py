@@ -118,7 +118,7 @@ def main(args):
             elif args.one_prompt:
                 outputs = model.generate([eos])
             else:
-                outputs = model.generate([eos for _ in prompts])
+                outputs = model.generate([eos for _ in full_prompts])
             
             all_outputs[decoding, plen] = outputs
 

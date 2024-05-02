@@ -49,17 +49,17 @@ printf "temp" | gantry run \
 
 # FIXME: Error here
 # echo "=== beam ==="
-printf "beam" | gantry run \
-    --workspace ai2/rusty-dawg \
-    --cluster ai2/allennlp-cirrascale \
-    --venv base \
-    --budget=ai2/allennlp \
-    --gpus=1 -- python generate_from_lm.py \
-        EleutherAI/pythia-12b \
-        $PROMPTS_PATH \
-        $OUT_DIR/by-decoding/beam.jsonl \
-        --n_tokens=$N_TOKENS \
-        -b 2 4 6 8
+# printf "beam" | gantry run \
+#     --workspace ai2/rusty-dawg \
+#     --cluster ai2/allennlp-cirrascale \
+#     --venv base \
+#     --budget=ai2/allennlp \
+#     --gpus=1 -- python generate_from_lm.py \
+#         EleutherAI/pythia-12b \
+#         $PROMPTS_PATH \
+#         $OUT_DIR/by-decoding/beam.jsonl \
+#         --n_tokens=$N_TOKENS \
+#         -b 2 4 6 8
 
 # Aggregate all the decoding results.
-cat $OUT_DIR/by-decoding/*.jsonl > $OUT_DIR/by-decoding.jsonl
+# cat $OUT_DIR/by-decoding/*.jsonl > $OUT_DIR/by-decoding.jsonl
