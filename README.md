@@ -40,7 +40,8 @@ SUFFIX="-deduped" P="1 10 100" scripts/generate_by_model.sh by-domain by-domain-
 
 To generate by model (from IID data):
 ```bash
-scripts/generate_by_model.sh iid by-model-p=0
+scripts/generate_by_model.sh iid by-model
+cat $ROOT/lm-generations/by-model/*.jsonl > $ROOT/lm-generations/by-model.jsonl
 ```
 
 To generate by decoding:

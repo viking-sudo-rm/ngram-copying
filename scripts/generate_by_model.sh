@@ -31,4 +31,3 @@ for idx in "${!SIZES[@]}"; do
             --p $P \
             --sample
 done
-# cat $DIR/*.jsonl > $OUT_DIR/models$SUFFIX.jsonl
