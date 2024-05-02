@@ -4,6 +4,7 @@ ROOT=${ROOT:-"/net/nfs.cirrascale/allennlp/willm/ngram-copying"}
 DATA=${1:-"iid"}
 SAVE=${2:-"by-model"}
 SUFFIX=${SUFFIX:""}
+P=${P:-"0"}  # The prefix lengths. For by-domain, pass "1 10 100"
 
 PROMPTS_PATH=$ROOT/data/$DATA/prompts.jsonl
 OUT_DIR=$ROOT/lm-generations
@@ -27,6 +28,7 @@ for idx in "${!SIZES[@]}"; do
             $PROMPTS_PATH \
             $OUT_DIR/$SAVE/$model.jsonl \
             --n_tokens=$N_TOKENS \
+            --p $P \
             --sample
 done
 # cat $DIR/*.jsonl > $OUT_DIR/models$SUFFIX.jsonl

@@ -30,17 +30,17 @@ python sample_prompts_and_val.py --by_domain --n_samples=100 \
 
 To generate by domain (only use Pythia-12b though):
 ```bash
-scripts/generate_by_model.sh by-domain by-domain
+P="1 10 100" scripts/generate_by_model.sh by-domain by-domain
 ```
 
 To do the same for deduped (only use Pythia-12b though):
 ```bash
-SUFFIX="-deduped" scripts/generate_by_model.sh by-domain by-domain-deduped
+SUFFIX="-deduped" P="1 10 100" scripts/generate_by_model.sh by-domain by-domain-deduped
 ```
 
 To generate by model (from IID data):
 ```bash
-scripts/generate_by_model.sh iid by-model
+scripts/generate_by_model.sh iid by-model-p=0
 ```
 
 To generate by decoding:
@@ -63,6 +63,15 @@ python generate_from_lm.py \
 
 Models: 70m, 160m, 410m, 1b, 1.4b, 2.8b, 6.9b, 12b  ([more information](https://huggingface.co/EleutherAI/pythia-6.9b))
 </details>
+
+To visualize data once it has been generated, you can export as a CSV and import into Google Drive:
+
+```bash
+python write_samples_csv.py \
+	$ROOT/lm-generations/by-domain/pythia-12b.jsonl \
+	~/by-domain.csv \
+	--prompts $ROOT/data/by-domain/prompts.jsonl
+```
 
 ### Feeding Generated Data Through the API
 

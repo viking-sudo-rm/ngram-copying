@@ -77,8 +77,8 @@ def parse_args():
     parser.add_argument("save_path", type=str)
     parser.add_argument("--n_tokens", type=int, default=1000)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--prompt_lengths", type=int, nargs="+", default=[1, 10, 100],
-                        help="Prefix length of prompts to use, in tokens")
+    parser.add_argument("--prompt_lengths", type=int, nargs="+", default=[0],
+                        help="Prefix lengths of prompts to use, in tokens")
     parser.add_argument("--one_prompt", action="store_true",
                         help="Only use one prompt. Add if p=0 and deterministic.")
 

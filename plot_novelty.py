@@ -78,6 +78,7 @@ def plot_model(args, model="EleutherAI/pythia-12b", name="Pythia-12B"):
 
     os.makedirs("plots/by-model", exist_ok=True)
     plt.savefig(f"plots/by-model/{clean_model_name(model)}.pdf")
+    plt.close()
 
 def plot_by_model(args, plen=1):
     os.makedirs("plots/by-model", exist_ok=True)
@@ -90,6 +91,7 @@ def plot_by_model(args, plen=1):
         model = clean_model_name(doc["meta"]["model"])
         plot_lengths[model].append(lengths)
 
+    plt.figure()
     sizes, prop_unique = get_proportion_unique(flatten(plot_lengths["val"]), max_n=args.max_n)
     plt.plot(sizes, prop_unique, label="val", color="gray", linestyle="--")
     for color, key in zip(BLUES, MODELS):
@@ -97,6 +99,7 @@ def plot_by_model(args, plen=1):
         plt.plot(sizes, prop_unique, label=key.split("-")[-1], color=color)
     format_novelty_plot(plt, max_n=args.max_n)
     plt.savefig("plots/by-model/curves.pdf")
+    plt.close()
     
     sizes = []
     mean_lengths = []
@@ -114,6 +117,7 @@ def plot_by_model(args, plen=1):
     plt.xscale("log")
     plt.tight_layout()
     plt.savefig("plots/by-model/scatter.pdf")
+    plt.close()
 
 def plot_by_domain(args):
     os.makedirs("plots/by-domain", exist_ok=True)
