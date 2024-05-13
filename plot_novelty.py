@@ -15,10 +15,15 @@ plt.rcParams.update({'font.size': 13})
 
 MODELS = ["pythia-70m", "pythia-160m", "pythia-410m", "pythia-1b", "pythia-1.4b", "pythia-2.8b",
           "pythia-6.9b", "pythia-12b"]
-PLENS = [1, 10, 100]
+PLENS = [0, 1, 10, 100]
+
+# Decoding parameters.
+TEMPS = [0., 0.85, 0.9, 0.95, 1.0, 1.05, 1.1, 2.0]
+KS = [20, 80, 160, "$\\infty$"]
+PS = [0.85, 0.9, 0.95, 1.0]
 
 BLUES = plt.cm.Blues(np.linspace(0.2, 1, len(MODELS)))
-ORANGES = plt.cm.Oranges(np.linspace(0.2, 1, len(PLENS)))
+ORANGES = plt.cm.Oranges(np.linspace(0.3, 1, len(PLENS)))
 
 def flatten(lists):
     return [item for row in lists for item in row]
@@ -58,7 +63,7 @@ def format_novelty_plot(plt, max_n: int = 10):
     plt.ylim([0, 1])
     plt.tight_layout()
 
-def plot_model(args, model="EleutherAI/pythia-12b", name="Pythia-12B"):
+def get_lengths_for_model(model: str) -> dict:
     plot_lengths = defaultdict(list)
     plot_lengths["val"] = results.val_iid["lengths"]
     for doc, lengths in zip(lmg.by_model, results.by_model["lengths"]):
@@ -66,12 +71,24 @@ def plot_model(args, model="EleutherAI/pythia-12b", name="Pythia-12B"):
             continue
         plen = doc["meta"]["prompt_len"]
         plot_lengths[plen].append(lengths)
+    for doc, lengths in zip(lmg.by_model_p, results.by_model_p["lengths"]):
+        if doc["meta"]["model"] != model:
+            continue
+        plen = doc["meta"]["prompt_len"]
+        plot_lengths[plen].append(lengths)
+    return plot_lengths
+
+def plot_model(args, model="EleutherAI/pythia-12b", name="Pythia-12B"):
+    if model == "EleutherAI/pythia-12b":
+        lengths = lengths_12b
+    else:
+        lengths = get_lengths_for_model(model)
 
     plt.figure()
-    sizes, prop_unique = get_proportion_unique(flatten(plot_lengths["val"]), max_n=args.max_n)
+    sizes, prop_unique = get_proportion_unique(flatten(lengths["val"]), max_n=args.max_n)
     plt.plot(sizes, prop_unique, linestyle="--", color="gray", label="val")
     for color, plen in zip(ORANGES, PLENS):
-        sizes, prop_unique = get_proportion_unique(flatten(plot_lengths[plen]), max_n=args.max_n)
+        sizes, prop_unique = get_proportion_unique(flatten(lengths[plen]), max_n=args.max_n)
         plt.plot(sizes, prop_unique, color=color, label=f"p={plen}")
     format_novelty_plot(plt, max_n=args.max_n)
     plt.title(f"n-gram novelty of {name}")
@@ -80,13 +97,13 @@ def plot_model(args, model="EleutherAI/pythia-12b", name="Pythia-12B"):
     plt.savefig(f"plots/by-model/{clean_model_name(model)}.pdf")
     plt.close()
 
-def plot_by_model(args, plen=1):
+def plot_by_model(args, filter_fn=None):
     os.makedirs("plots/by-model", exist_ok=True)
     
     plot_lengths = defaultdict(list)
     plot_lengths["val"] = results.val_iid["lengths"]
     for doc, lengths in zip(lmg.by_model, results.by_model["lengths"]):
-        if doc["meta"]["prompt_len"] != plen:
+        if filter_fn and not filter_fn(doc["meta"]):
             continue
         model = clean_model_name(doc["meta"]["model"])
         plot_lengths[model].append(lengths)
@@ -119,8 +136,9 @@ def plot_by_model(args, plen=1):
     plt.savefig("plots/by-model/scatter.pdf")
     plt.close()
 
-def plot_by_domain(args):
-    os.makedirs("plots/by-domain", exist_ok=True)
+def plot_by_domain(args, deduped=False):
+    dirname = "plots/by-domain" + ("-deduped" if deduped else "")
+    os.makedirs(dirname, exist_ok=True)
     lengths_by_domain = defaultdict(list)
     domains = set()
 
@@ -131,7 +149,8 @@ def plot_by_domain(args):
         domains.add(domain)
 
     # Next compute for CDAWG outputs.
-    for doc, lengths in zip(lmg.by_domain, results.by_domain["lengths"]):
+    all_lengths = results.by_domain["lengths"] if not deduped else results.by_domain_deduped["lengths"]
+    for doc, lengths in zip(lmg.by_domain, all_lengths):
         plen = doc["meta"]["prompt_len"]
         pidx = doc["meta"]["prompt_idx"]
         prompt = data.prompts_by_domain[pidx]
@@ -143,22 +162,86 @@ def plot_by_domain(args):
         plt.figure()
         val_lengths = lengths_by_domain[domain, "val"]
         val_sizes, val_prop_unique = get_proportion_unique(flatten(val_lengths), max_n=args.max_n)
-        plt.plot(val_sizes, val_prop_unique, linestyle="--", color="gray")
+        plt.plot(val_sizes, val_prop_unique, linestyle="--", color="gray", label="val")
         for color, plen in zip(ORANGES, PLENS):
-            lengths = lengths_by_domain[domain, plen]
+            if plen == 0:
+                lengths = lengths_12b[0]
+            else:
+                lengths = lengths_by_domain[domain, plen]
             sizes, prop_unique = get_proportion_unique(flatten(lengths), max_n=args.max_n)
             plt.plot(sizes, prop_unique, label=f"p={plen}", color=color)
-        plt.title(f"n-gram novelty for {domain}")
+        plt.title(f"n-gram novelty for {domain}" + (" (deduped)" if deduped else ""))
         format_novelty_plot(plt, max_n=args.max_n)
-        plt.savefig(f"plots/by-domain/{domain}.pdf")
+        plt.savefig(f"{dirname}/{domain}.pdf")
         plt.close()
+
+def plot_by_decoding(args):
+    os.makedirs("plots/by-decoding", exist_ok=True)
+
+    lengths_by_dec = defaultdict(list)
+    for doc, lengths in zip(lmg.by_decoding, results.by_decoding["lengths"]):
+        decoding = doc["meta"]["decoding"]
+        lengths_by_dec[decoding].extend(lengths)
+    lengths_by_dec["temp=1.0"] = flatten(lengths_12b[0])
+    lengths_by_dec["top_p=1.0"] = flatten(lengths_12b[0])
+    lengths_by_dec["top_k=$\\infty$"] = flatten(lengths_12b[0])
+
+    # Create temperature plot.
+    plt.figure()
+    lengths = flatten(lengths_12b["val"])
+    sizes, prop_unique = get_proportion_unique(lengths, max_n=args.max_n)
+    plt.plot(sizes, prop_unique, color="gray", linestyle="--", label="val")
+    colors = plt.cm.Reds(np.linspace(0.2, 1., len(TEMPS)))
+    for color, temp in zip(colors, TEMPS):
+        lengths = lengths_by_dec[f"temp={temp}"]
+        sizes, prop_unique = get_proportion_unique(lengths, max_n=args.max_n)
+        plt.plot(sizes, prop_unique, label=Rf"$\tau$={temp}", color=color)
+    plt.title("n-gram novelty by temperature")
+    format_novelty_plot(plt, max_n=args.max_n)
+    plt.savefig(f"plots/by-decoding/temp.pdf")
+    plt.close()
+
+    # Create top p plot.
+    # FIXME: p is overloaded between prefix length and here.
+    plt.figure()
+    lengths = flatten(lengths_12b["val"])
+    sizes, prop_unique = get_proportion_unique(lengths, max_n=args.max_n)
+    plt.plot(sizes, prop_unique, color="gray", linestyle="--", label="val")
+    colors = plt.cm.Greens(np.linspace(0.2, 1., len(PS)))
+    for color, p in zip(colors, PS):
+        lengths = lengths_by_dec[f"top_p={p}"]
+        sizes, prop_unique = get_proportion_unique(lengths, max_n=args.max_n)
+        plt.plot(sizes, prop_unique, label=Rf"$p$={p}", color=color)
+    plt.title("n-gram novelty by top-p")
+    format_novelty_plot(plt, max_n=args.max_n)
+    plt.savefig(f"plots/by-decoding/top_p.pdf")
+    plt.close()
+
+    plt.figure()
+    lengths = flatten(lengths_12b["val"])
+    sizes, prop_unique = get_proportion_unique(lengths, max_n=args.max_n)
+    plt.plot(sizes, prop_unique, color="gray", linestyle="--", label="val")
+    colors = plt.cm.Purples(np.linspace(0.2, 1., len(PS)))
+    for color, k in zip(colors, KS):
+        lengths = lengths_by_dec[f"top_k={k}"]
+        sizes, prop_unique = get_proportion_unique(lengths, max_n=args.max_n)
+        plt.plot(sizes, prop_unique, label=Rf"$k$={k}", color=color)
+    plt.title("n-gram novelty by top-k")
+    format_novelty_plot(plt, max_n=args.max_n)
+    plt.savefig(f"plots/by-decoding/top_k.pdf")
+    plt.close()
 
 if __name__ == "__main__":
     args = parse_args()
+
     data = CorpusData.load(args.root)
     lmg = LMGenerations.load(args.root)
     results = Results.load(args.root)
 
-    plot_model(args, model="EleutherAI/pythia-12b")
-    plot_by_model(args)
-    plot_by_domain(args)
+    lengths_12b = get_lengths_for_model("EleutherAI/pythia-12b")
+
+    # plot_model(args, model="EleutherAI/pythia-12b")
+    # plot_by_model(args)
+    # plot_by_domain(args)
+    # plot_by_domain(args, deduped=True)
+    plot_by_decoding(args)

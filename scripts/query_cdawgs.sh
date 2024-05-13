@@ -30,7 +30,7 @@ TIMEOUT=9999999999
 
 # echo "=== Generating by-domain-deduped results ==="
 # python query_cdawgs.py \
-#     $ROOT/lm-generations/by-domain-deduped/pythia-12b-deduped.jsonl \
+#     $ROOT/lm-generations/deduped/by-domain/pythia-12b-deduped.jsonl \
 #     $ROOT/results/by-domain-deduped.json \
 #     --batch_size $BATCH_SIZE \
 #     --read_timeout $TIMEOUT
@@ -56,8 +56,8 @@ python query_cdawgs.py \
 
 # FIXME: Get beam search data.
 # echo "=== Generating by-decoding results ==="
-# python query_cdawgs.py \
-#     $ROOT/lm-generations/by-decoding/pythia-12b.jsonl \
-#     $ROOT/results/by-decoding.json \
-#     --batch_size $BATCH_SIZE \
-#     --read_timeout $TIMEOUT
+python query_cdawgs.py \
+    $ROOT/lm-generations/by-decoding.jsonl \
+    $ROOT/results/by-decoding.json \
+    --batch_size $BATCH_SIZE \
+    --read_timeout $TIMEOUT

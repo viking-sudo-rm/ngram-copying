@@ -47,8 +47,13 @@ cat $ROOT/lm-generations/by-model/*.jsonl > $ROOT/lm-generations/by-model.jsonl
 To generate by decoding:
 ```bash
 scripts/generate_by_decoding.sh
+cat $ROOT/lm-generations/by-decoding/*.jsonl > $ROOT/lm-generations/by-decoding.jsonl
 ```
 
+To generate from Pythia-12B deduped:
+```bash
+scripts/generate_deduped.sh
+```
 
 <details>
 <summary>Example of how to generate from a specific model</summary>

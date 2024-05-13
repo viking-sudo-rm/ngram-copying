@@ -41,11 +41,14 @@ def get_params_grid(args) -> dict[str, SamplingParams]:
     # === Beam search is a bit special ===
     for b in args.beam:
         # See https://github.com/vllm-project/vllm/issues/975
-        all_params[f"beam={b}"] = SamplingParams(temperature=0., use_beam_search=True, n=b, **kwargs)
+        if b == 1:  # Greedy
+            all_params[f"beam={b}"] = SamplingParams(temperature=0., **kwargs)
+        else:
+            all_params[f"beam={b}"] = SamplingParams(temperature=0., use_beam_search=True, best_of=b, early_stopping=True, **kwargs)
 
     return all_params
 
-def write_jsonl(fh, model, all_outputs: dict):
+def write_jsonl(fh, args, all_outputs: dict):
     for (decoding, plen), outputs in all_outputs.items():
         for pidx, output in enumerate(outputs):
             for completion in output.outputs:
@@ -54,10 +57,11 @@ def write_jsonl(fh, model, all_outputs: dict):
                     "tokens": completion.token_ids,
                     "text": completion.text,
                     "meta": {
-                        "model": model,
+                        "model": args.model,
                         "decoding": decoding,
                         "prompt_idx": pidx,
                         "prompt_len": plen,
+                        "n_tokens": args.n_tokens,
                     }
                 }
                 fh.write(json.dumps(blob))
@@ -116,14 +120,14 @@ def main(args):
                 prompts = [p[:plen] for p in full_prompts]
                 outputs = model.generate(prompt_token_ids=prompts, sampling_params=params)
             elif args.one_prompt:
-                outputs = model.generate([eos])
+                outputs = model.generate([eos], sampling_params=params)
             else:
-                outputs = model.generate([eos for _ in full_prompts])
+                outputs = model.generate([eos for _ in full_prompts], sampling_params=params)
             
             all_outputs[decoding, plen] = outputs
 
     with open(args.save_path, "w") as fh:
-        write_jsonl(fh, args.model, all_outputs)
+        write_jsonl(fh, args, all_outputs)
 
 
 if __name__ == "__main__":
