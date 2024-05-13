@@ -5,10 +5,10 @@ PROMPTS_PATH=$ROOT/data/iid/prompts.jsonl
 OUT_DIR=$ROOT/lm-generations
 N_TOKENS=1000
 
-echo "========== Generating 'deduped/p=0' =========="
+echo "========== Generating 'pythia-12b-deduped' =========="
 mkdir $OUT_DIR/deduped
 
-printf "deduped" | gantry run \
+printf "pythia-12b-deduped" | gantry run \
     --workspace ai2/rusty-dawg \
     --cluster ai2/allennlp-cirrascale \
     --venv base \
