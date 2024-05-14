@@ -4,7 +4,7 @@ ROOT=${ROOT:-"/net/nfs.cirrascale/allennlp/willm/ngram-copying"}
 DATA=${1:-"iid"}
 SAVE=${2:-"by-model"}
 SUFFIX=${SUFFIX:""}
-P=${P:-"0"}  # The prompt lengths. For by-domain, pass "1 10 100"
+PLENGTHS=${PLENGTHS:-"0"}  # The prompt lengths. For by-domain, pass "1 10 100"
 
 PROMPTS_PATH=$ROOT/data/$DATA/prompts.jsonl
 OUT_DIR=$ROOT/lm-generations
@@ -28,6 +28,6 @@ for idx in "${!SIZES[@]}"; do
             $PROMPTS_PATH \
             $OUT_DIR/$SAVE/$model.jsonl \
             --n_tokens=$N_TOKENS \
-            --prompt_lengths $P \
+            --prompt_lengths $PLENGTHS \
             --sample
 done

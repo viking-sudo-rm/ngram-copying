@@ -4,6 +4,7 @@ ROOT=${ROOT:-"/net/nfs.cirrascale/allennlp/willm/ngram-copying"}
 PROMPTS_PATH=$ROOT/data/iid/prompts.jsonl
 OUT_DIR=$ROOT/lm-generations
 N_TOKENS=1000
+PLENGTHS="0 1 10 100"
 
 echo "========== Generating 'pythia-12b-deduped' =========="
 mkdir $OUT_DIR/deduped
@@ -18,5 +19,5 @@ printf "pythia-12b-deduped" | gantry run \
         $PROMPTS_PATH \
         $OUT_DIR/deduped/pythia-12b-deduped.jsonl \
         --n_tokens=$N_TOKENS \
-        --prompt_lengths 0 1 10 100 \
+        --prompt_lengths $PLENGTHS \
         --sample

@@ -4,10 +4,11 @@ channels:
   - pytorch
 dependencies:
   - python=3.10
-  - cudatoolkit=12.1
+  - cudatoolkit=11.8
   - numpy
   - pytorch
   - tqdm
+  - pip
   - pip:
     - vllm
     - triton
