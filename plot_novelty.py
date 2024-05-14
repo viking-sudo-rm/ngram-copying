@@ -1,6 +1,6 @@
 """Script to regenerate all of the plots that we need."""
 
-from collections import Counter, defaultdict
+from collections import defaultdict
 from typing import NamedTuple
 import numpy as np
 import argparse
@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
 from src.data import CorpusData, LMGenerations, Results
+from src.ngram_novelty import get_proportion_unique
 
 plt.rcParams.update({'font.size': 13})
 
@@ -45,14 +46,6 @@ def parse_args():
                         default="/net/nfs.cirrascale/allennlp/willm/ngram-copying")
     parser.add_argument("--max_n", "-n", type=int, default=10)
     return parser.parse_args()
-
-def get_proportion_unique(suffix_contexts, max_n: int = 10):
-    """Convert length data to n-gram novelty data"""
-    lengths = np.arange(max_n)
-    counter = Counter(suffix_contexts)
-    freqs = np.array([counter[l] for l in lengths])
-    prop_unique = (np.cumsum(freqs) - lengths) / (-lengths + len(suffix_contexts))
-    return lengths + 1, prop_unique
 
 def format_novelty_plot(plt, max_n: int = 10):
     plt.legend()

@@ -104,6 +104,8 @@ def main(args):
     args.device = "cuda" if torch.cuda.is_available() else "cpu"
     log.info(f"CUDA device: {args.device}")
     log.info(f"CUDA version: {torch.version.cuda}")
+    print(f"CUDA device: {args.device}")
+    print(f"CUDA version: {torch.version.cuda}")
 
     model = LLM(model=args.model, seed=args.seed)
     tokenizer = model.get_tokenizer()
