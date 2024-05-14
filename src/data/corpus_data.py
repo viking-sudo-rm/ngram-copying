@@ -1,21 +1,20 @@
 import json
 import os
-from typing import NamedTuple
+from typing import Optional, NamedTuple
+
+from .utils import try_load_jsonl
 
 class CorpusData(NamedTuple):
-    prompts_iid: list
-    val_iid: list
-    prompts_by_domain: list
-    val_by_domain: list
+    prompts_iid: Optional[list]
+    val_iid: Optional[list]
+    prompts_by_domain: Optional[list]
+    val_by_domain: Optional[list]
 
     @classmethod
     def load(cls, root):
-        with open(os.path.join(root, "data/iid/prompts.jsonl")) as fh:
-            prompts_iid = [json.loads(line) for line in fh]
-        with open(os.path.join(root, "data/iid/val.jsonl")) as fh:
-            val_iid = [json.loads(line) for line in fh]
-        with open(os.path.join(root, "data/by-domain/prompts.jsonl")) as fh:
-            prompts_by_domain = [json.loads(line) for line in fh]
-        with open(os.path.join(root, "data/by-domain/val.jsonl")) as fh:
-            val_by_domain = [json.loads(line) for line in fh]
-        return cls(prompts_iid, val_iid, prompts_by_domain, val_by_domain)
+        return cls(
+            prompts_iid=try_load_jsonl(os.path.join(root, "data/iid/prompts.jsonl")),
+            val_iid=try_load_jsonl(os.path.join(root, "data/iid/val.jsonl")),
+            prompts_by_domain=try_load_jsonl(os.path.join(root, "data/by-domain/prompts.jsonl")),
+            val_by_domain=try_load_jsonl(os.path.join(root, "data/by-domain/val.jsonl")),
+        )

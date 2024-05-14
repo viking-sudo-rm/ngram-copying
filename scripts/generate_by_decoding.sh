@@ -64,7 +64,8 @@ printf "beam" | gantry run \
         $OUT_DIR/by-decoding/beam.jsonl \
         --n_tokens=$N_TOKENS \
         --prompt_lengths $PLENGTHS \
-        -b 1 2 3
+        -b 1 2 3 \
+        --swap_space 64
 
 ### DEBUG ###
 # python generate_from_lm.py \

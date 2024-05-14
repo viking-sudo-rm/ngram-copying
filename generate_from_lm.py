@@ -89,6 +89,8 @@ def parse_args():
                         help="Prefix lengths of prompts to use, in tokens")
     parser.add_argument("--one_prompt", action="store_true",
                         help="Only use one prompt. Add if p=0 and deterministic.")
+    parser.add_argument("--swap_space", type=int, default=4,
+                        help="CPU swap space used by VLLM. Increase for beam search.")
 
     # === Decoding options ===
     parser.add_argument("--sample", action="store_true", help="Try naive sampling decoding")
@@ -109,7 +111,7 @@ def main(args):
     log.info(f"CUDA device: {args.device}")
     log.info(f"CUDA version: {torch.version.cuda}")
 
-    model = LLM(model=args.model, seed=args.seed)
+    model = LLM(model=args.model, seed=args.seed, swap_space=args.swap_space)
     tokenizer = model.get_tokenizer()
     eos = tokenizer.eos_token
     all_params = get_params_grid(args)

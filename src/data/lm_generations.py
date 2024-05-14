@@ -1,21 +1,22 @@
 import json
 import os
-from typing import NamedTuple
+from typing import NamedTuple, Optional
+
+from .utils import try_load_jsonl
 
 class LMGenerations(NamedTuple):
-    by_domain: list
-    by_model: list
-    by_model_p: list
-    by_decoding: list
+    by_domain: Optional[list]
+    by_model: Optional[list]
+    by_model_p: Optional[list]
+    by_decoding: Optional[list]
+    deduped: Optional[list]
 
     @classmethod
     def load(cls, root):
-        with open(os.path.join(root, "lm-generations/by-domain/pythia-12b.jsonl")) as fh:
-            by_domain = [json.loads(line) for line in fh]
-        with open(os.path.join(root, "lm-generations/by-model.jsonl")) as fh:
-            by_model = [json.loads(line) for line in fh]
-        with open(os.path.join(root, "lm-generations/by-model-p.jsonl")) as fh:
-            by_model_p = [json.loads(line) for line in fh]
-        with open(os.path.join(root, "lm-generations/by-decoding.jsonl")) as fh:
-            by_decoding = [json.loads(line) for line in fh]
-        return cls(by_domain, by_model, by_model_p, by_decoding)
+        return cls(
+            by_domain=try_load_jsonl(os.path.join(root, "lm-generations/by-domain/pythia-12b.jsonl")),
+            by_model=try_load_jsonl(os.path.join(root, "lm-generations/by-model.jsonl")),
+            by_model_p=try_load_jsonl(os.path.join(root, "lm-generations/by-model-p.jsonl")),
+            by_decoding=try_load_jsonl(os.path.join(root, "lm-generations/by-decoding.jsonl")),
+            deduped=try_load_jsonl(os.path.join(root, "lm-generations/deduped/pythia-12b-deduped.jsonl"))
+        )

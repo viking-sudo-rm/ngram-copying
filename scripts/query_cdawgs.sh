@@ -39,7 +39,6 @@ TIMEOUT=9999999999
 # ^ Everything above is done! :)
 #################################
 
-# Backed up the old p=1 results. So run this on p=0.
 echo "=== Generating by-model results ==="
 python query_cdawgs.py \
     $ROOT/lm-generations/by-model.jsonl \
@@ -47,17 +46,17 @@ python query_cdawgs.py \
     --batch_size $BATCH_SIZE \
     --read_timeout $TIMEOUT
 
-echo "=== Generating deduped-p=0 results ==="
+echo "=== Generating pythia-12b-deduped results ==="
 python query_cdawgs.py \
-    $ROOT/lm-generations/deduped-p=0.jsonl \
-    $ROOT/results/deduped-p=0.json \
+    $ROOT/lm-generations/deduped/pythia-12b-deduped.jsonl \
+    $ROOT/results/deduped/pythia-12b-deduped.json \
     --batch_size $BATCH_SIZE \
     --read_timeout $TIMEOUT
 
-# FIXME: Get beam search data.
+# TODO: Wait to finish
 # echo "=== Generating by-decoding results ==="
-python query_cdawgs.py \
-    $ROOT/lm-generations/by-decoding.jsonl \
-    $ROOT/results/by-decoding.json \
-    --batch_size $BATCH_SIZE \
-    --read_timeout $TIMEOUT
+# python query_cdawgs.py \
+#     $ROOT/lm-generations/by-decoding.jsonl \
+#     $ROOT/results/by-decoding.json \
+#     --batch_size $BATCH_SIZE \
+#     --read_timeout $TIMEOUT
