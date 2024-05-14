@@ -22,7 +22,7 @@ for idx in "${!SIZES[@]}"; do
         --workspace ai2/rusty-dawg \
         --cluster ai2/allennlp-cirrascale \
         --venv base \
-        --beaker-image ai2/pytorch:1.13.1-cuda11.7-python3.10 \
+        --beaker-image ai2/pytorch1.13.1-cuda11.7-python3.10 \
         --budget=ai2/allennlp \
         --gpus=1 -- python generate_from_lm.py \
             EleutherAI/$model \
