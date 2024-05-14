@@ -8,9 +8,6 @@ dependencies:
   - python=3.10
   - cudatoolkit=11.7
   - numpy
-  - pytorch=1.13.1
+  - pytorch=2.1
   - tqdm
   - pip
-  - pip:
-    - vllm
-    - triton
