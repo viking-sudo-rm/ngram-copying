@@ -8,6 +8,6 @@ dependencies:
   - python=3.10
   - cudatoolkit=11.8
   - numpy
-  - pytorch=2.1
+  - pytorch=2.3
   - tqdm
   - pip

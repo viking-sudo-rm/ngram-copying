@@ -15,6 +15,9 @@ from vllm import LLM, SamplingParams
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
+ch = logging.StreamHandler()
+ch.setLevel(level)
+log.addHandler(ch)
 
 def get_params_grid(args) -> dict[str, SamplingParams]:
     """Get decoding parameters.
@@ -104,8 +107,6 @@ def main(args):
     args.device = "cuda" if torch.cuda.is_available() else "cpu"
     log.info(f"CUDA device: {args.device}")
     log.info(f"CUDA version: {torch.version.cuda}")
-    print(f"CUDA device: {args.device}")
-    print(f"CUDA version: {torch.version.cuda}")
 
     model = LLM(model=args.model, seed=args.seed)
     tokenizer = model.get_tokenizer()
