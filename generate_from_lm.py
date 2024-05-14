@@ -102,6 +102,9 @@ def parse_args():
 
 def main(args):
     args.device = "cuda" if torch.cuda.is_available() else "cpu"
+    log.info(f"CUDA device: {args.device}")
+    log.info(f"CUDA version: {torch.version.cuda}")
+
     model = LLM(model=args.model, seed=args.seed)
     tokenizer = model.get_tokenizer()
     eos = tokenizer.eos_token

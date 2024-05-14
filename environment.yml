@@ -4,7 +4,7 @@ channels:
   - pytorch
 dependencies:
   - python=3.10
-  - cudatoolkit=11.3
+  - cudatoolkit=12.1
   - numpy
   - pytorch
   - tqdm
