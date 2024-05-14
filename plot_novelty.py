@@ -78,13 +78,20 @@ def plot_model(args, model="EleutherAI/pythia-12b", name="Pythia-12B"):
         lengths = get_lengths_for_model(model)
 
     plt.figure()
+    
+    # Validation baseline.
     sizes, prop_unique = get_proportion_unique(flatten(lengths["val"]), max_n=args.max_n)
     plt.plot(sizes, prop_unique, linestyle="--", color="gray", label="val")
-    for color, plen in zip(ORANGES, PLENS):
-        sizes, prop_unique = get_proportion_unique(flatten(lengths[plen]), max_n=args.max_n)
-        plt.plot(sizes, prop_unique, color=color, label=f"p={plen}")
-    format_novelty_plot(plt, max_n=args.max_n)
-    plt.title(f"n-gram novelty of {name}")
+    
+    # Theoretical lower bound.
+    sizes, prop_unique = get_novelty_lb(CORPUS_SIZE, entropy=0.5, prob=0.75)
+    plt.plot(sizes, prop_unique, linestyle="--", color="red", label="LB")
+    
+    # for color, plen in zip(ORANGES, PLENS):
+    #     sizes, prop_unique = get_proportion_unique(flatten(lengths[plen]), max_n=args.max_n)
+    #     plt.plot(sizes, prop_unique, color=color, label=f"p={plen}")
+    # format_novelty_plot(plt, max_n=args.max_n)
+    # plt.title(f"n-gram novelty of {name}")
 
     os.makedirs("plots/by-model", exist_ok=True)
     plt.savefig(f"plots/by-model/{clean_model_name(model)}.pdf")
@@ -233,8 +240,8 @@ if __name__ == "__main__":
 
     lengths_12b = get_lengths_for_model("EleutherAI/pythia-12b")
 
-    # plot_model(args, model="EleutherAI/pythia-12b")
+    plot_model(args, model="EleutherAI/pythia-12b")
     # plot_by_model(args)
     # plot_by_domain(args)
     # plot_by_domain(args, deduped=True)
-    plot_by_decoding(args)
+    # plot_by_decoding(args)
