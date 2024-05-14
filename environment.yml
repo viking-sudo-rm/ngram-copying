@@ -1,12 +1,14 @@
 # environment.yml for running Gantry experiments.
+# Can use with image: pytorch:1.13.1-cuda11.7-python3.10
+
 name: base
 channels:
   - pytorch
 dependencies:
   - python=3.10
-  - cudatoolkit=11.8
+  - cudatoolkit=11.7
   - numpy
-  - pytorch
+  - pytorch=1.13.1
   - tqdm
   - pip
   - pip:
