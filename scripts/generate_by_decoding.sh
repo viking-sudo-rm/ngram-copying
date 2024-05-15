@@ -51,8 +51,8 @@ printf "temp" | gantry run \
         --prompt_lengths $PLENGTHS \
         -t 0.00 0.85 0.90 0.95 1.05 1.10 2.00
 
-echo "=== beam ==="
-printf "beam" | gantry run \
+echo "=== beam1 ==="
+printf "beam1" | gantry run \
     --workspace ai2/rusty-dawg \
     --cluster ai2/allennlp-cirrascale \
     --venv base \
@@ -60,10 +60,10 @@ printf "beam" | gantry run \
     --gpus=1 -- python generate_from_lm.py \
         EleutherAI/pythia-12b \
         $PROMPTS_PATH \
-        $OUT_DIR/by-decoding/beam.jsonl \
+        $OUT_DIR/by-decoding/beam1.jsonl \
         --n_tokens=$N_TOKENS \
         --prompt_lengths $PLENGTHS \
-        -b 1 2 3 \
+        -b 1 \
         --swap_space 64
 
 echo "=== beam4 ==="
