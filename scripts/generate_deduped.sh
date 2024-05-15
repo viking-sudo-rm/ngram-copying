@@ -13,8 +13,9 @@ printf "pythia-12b-deduped" | gantry run \
     --workspace ai2/rusty-dawg \
     --cluster ai2/allennlp-cirrascale \
     --venv base \
-    --budget=ai2/allennlp \
-    --gpus=1 -- python generate_from_lm.py \
+    --budget ai2/allennlp \
+    --priority normal \
+    --gpus 1 -- python generate_from_lm.py \
         EleutherAI/pythia-12b-deduped \
         $PROMPTS_PATH \
         $OUT_DIR/deduped/pythia-12b-deduped.jsonl \

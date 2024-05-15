@@ -15,7 +15,8 @@ printf "topk" | gantry run \
     --cluster ai2/allennlp-cirrascale \
     --venv base \
     --budget=ai2/allennlp \
-    --gpus=1 -- python generate_from_lm.py \
+    --priority normal \
+    --gpus 1 -- python generate_from_lm.py \
         EleutherAI/pythia-12b \
         $PROMPTS_PATH \
         $OUT_DIR/by-decoding/topk.jsonl \
@@ -29,7 +30,8 @@ printf "topp" | gantry run \
     --cluster ai2/allennlp-cirrascale \
     --venv base \
     --budget=ai2/allennlp \
-    --gpus=1 -- python generate_from_lm.py \
+    --priority normal \
+    --gpus 1 -- python generate_from_lm.py \
         EleutherAI/pythia-12b \
         $PROMPTS_PATH \
         $OUT_DIR/by-decoding/topp.jsonl \
@@ -43,7 +45,8 @@ printf "temp" | gantry run \
     --cluster ai2/allennlp-cirrascale \
     --venv base \
     --budget=ai2/allennlp \
-    --gpus=1 -- python generate_from_lm.py \
+    --priority normal \
+    --gpus 1 -- python generate_from_lm.py \
         EleutherAI/pythia-12b \
         $PROMPTS_PATH \
         $OUT_DIR/by-decoding/temp.jsonl \
@@ -56,23 +59,25 @@ printf "beam1" | gantry run \
     --workspace ai2/rusty-dawg \
     --cluster ai2/allennlp-cirrascale \
     --venv base \
-    --budget=ai2/allennlp \
-    --gpus=1 -- python generate_from_lm.py \
+    --budget ai2/allennlp \
+    --priority normal \
+    --gpus 1 -- python generate_from_lm.py \
         EleutherAI/pythia-12b \
         $PROMPTS_PATH \
         $OUT_DIR/by-decoding/beam1.jsonl \
         --n_tokens=$N_TOKENS \
         --prompt_lengths $PLENGTHS \
-        -b 1 \
-        --swap_space 64
+        -b 1 
 
 echo "=== beam4 ==="
 printf "beam4" | gantry run \
     --workspace ai2/rusty-dawg \
     --cluster ai2/allennlp-cirrascale \
     --venv base \
-    --budget=ai2/allennlp \
-    --gpus=1 -- python generate_from_lm.py \
+    --budget ai2/allennlp \
+    --priority normal \
+    --memory 100g \
+    --gpus 1 -- python generate_from_lm.py \
         EleutherAI/pythia-12b \
         $PROMPTS_PATH \
         $OUT_DIR/by-decoding/beam4.jsonl \
@@ -87,7 +92,9 @@ printf "beam8" | gantry run \
     --cluster ai2/allennlp-cirrascale \
     --venv base \
     --budget=ai2/allennlp \
-    --gpus=1 -- python generate_from_lm.py \
+    --priority normal \
+    --memory 100g \
+    --gpus 1 -- python generate_from_lm.py \
         EleutherAI/pythia-12b \
         $PROMPTS_PATH \
         $OUT_DIR/by-decoding/beam.jsonl \
@@ -95,6 +102,3 @@ printf "beam8" | gantry run \
         --prompt_lengths $PLENGTHS \
         -b 8 \
         --swap_space 64
-
-# Aggregate all the decoding results.
-# cat $OUT_DIR/by-decoding/*.jsonl > $OUT_DIR/by-decoding.jsonl
