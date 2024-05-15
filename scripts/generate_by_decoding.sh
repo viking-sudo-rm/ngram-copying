@@ -52,7 +52,6 @@ printf "temp" | gantry run \
         -t 0.00 0.85 0.90 0.95 1.05 1.10 2.00
 
 echo "=== beam ==="
-# Gets slow for larger values of b, because whole beam needs to be completed with VLLM.
 printf "beam" | gantry run \
     --workspace ai2/rusty-dawg \
     --cluster ai2/allennlp-cirrascale \
@@ -67,15 +66,35 @@ printf "beam" | gantry run \
         -b 1 2 3 \
         --swap_space 64
 
-### DEBUG ###
-# python generate_from_lm.py \
-#     EleutherAI/pythia-70m \
-#     $ROOT/data/iid/small-prompts.jsonl \
-#     $OUT_DIR/by-decoding/beam.jsonl \
-#     --n_tokens=$N_TOKENS \
-#     --prompt_lengths 0 \
-#     --sample
-#     # -b 4
+echo "=== beam4 ==="
+printf "beam4" | gantry run \
+    --workspace ai2/rusty-dawg \
+    --cluster ai2/allennlp-cirrascale \
+    --venv base \
+    --budget=ai2/allennlp \
+    --gpus=1 -- python generate_from_lm.py \
+        EleutherAI/pythia-12b \
+        $PROMPTS_PATH \
+        $OUT_DIR/by-decoding/beam4.jsonl \
+        --n_tokens=$N_TOKENS \
+        --prompt_lengths $PLENGTHS \
+        -b 4 \
+        --swap_space 64
+
+echo "=== beam8 ==="
+printf "beam8" | gantry run \
+    --workspace ai2/rusty-dawg \
+    --cluster ai2/allennlp-cirrascale \
+    --venv base \
+    --budget=ai2/allennlp \
+    --gpus=1 -- python generate_from_lm.py \
+        EleutherAI/pythia-12b \
+        $PROMPTS_PATH \
+        $OUT_DIR/by-decoding/beam.jsonl \
+        --n_tokens=$N_TOKENS \
+        --prompt_lengths $PLENGTHS \
+        -b 8 \
+        --swap_space 64
 
 # Aggregate all the decoding results.
 # cat $OUT_DIR/by-decoding/*.jsonl > $OUT_DIR/by-decoding.jsonl
