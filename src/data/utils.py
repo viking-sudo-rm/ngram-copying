@@ -8,7 +8,8 @@ def try_load_jsonl(path: str) -> Optional[list]:
     with open(path) as fh:
         return [json.loads(line) for line in fh]
 
-def try_load_json(path: str) -> Option[dict]:
+def try_load_json(path: str) -> Optional[dict]:
     if not os.path.exists(path):
         return None
-    return json.load(path)
+    with open(path) as fh:
+        return json.load(fh)

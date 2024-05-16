@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
 from src.data import CorpusData, LMGenerations, Results
-from src.ngram_novelty import get_proportion_unique
+from src.ngram_novelty import get_proportion_unique, get_novelty_lb
 
 plt.rcParams.update({'font.size': 13})
 
@@ -25,6 +25,11 @@ PS = [0.85, 0.9, 0.95, 1.0]
 
 BLUES = plt.cm.Blues(np.linspace(0.2, 1, len(MODELS)))
 ORANGES = plt.cm.Oranges(np.linspace(0.3, 1, len(PLENS)))
+
+# Parameters for lower bound curve.
+CORPUS_SIZE = 400 * 10e9
+P_AMBIGUOUS = 0.9
+ENTROPY = 0.8
 
 def flatten(lists):
     return [item for row in lists for item in row]
@@ -44,16 +49,19 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=str,
                         default="/net/nfs.cirrascale/allennlp/willm/ngram-copying")
-    parser.add_argument("--max_n", "-n", type=int, default=10)
+    parser.add_argument("--max-n", "-n", type=int, default=10)
+    parser.add_argument("--log-scale", action="store_true")
     return parser.parse_args()
 
-def format_novelty_plot(plt, max_n: int = 10):
+def format_novelty_plot(args, plt):
     plt.legend()
     # plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='small')
     plt.xlabel("n-gram size")
     plt.ylabel("% novel")
-    plt.xticks(list(range(1, max_n + 1)))
+    plt.xticks(list(range(1, args.max_n + 1)))
     plt.ylim([0, 1])
+    if args.log_scale:
+        plt.xscale("log")
     plt.tight_layout()
 
 def get_lengths_for_model(model: str) -> dict:
@@ -83,18 +91,47 @@ def plot_model(args, model="EleutherAI/pythia-12b", name="Pythia-12B"):
     sizes, prop_unique = get_proportion_unique(flatten(lengths["val"]), max_n=args.max_n)
     plt.plot(sizes, prop_unique, linestyle="--", color="gray", label="val")
     
-    # Theoretical lower bound.
-    sizes, prop_unique = get_novelty_lb(CORPUS_SIZE, entropy=0.5, prob=0.75)
+    # Union bound baseline.
+    sizes, prop_unique = get_novelty_lb(CORPUS_SIZE, entropy=ENTROPY, prob=P_AMBIGUOUS, max_n=args.max_n)
     plt.plot(sizes, prop_unique, linestyle="--", color="red", label="LB")
     
-    # for color, plen in zip(ORANGES, PLENS):
-    #     sizes, prop_unique = get_proportion_unique(flatten(lengths[plen]), max_n=args.max_n)
-    #     plt.plot(sizes, prop_unique, color=color, label=f"p={plen}")
-    # format_novelty_plot(plt, max_n=args.max_n)
-    # plt.title(f"n-gram novelty of {name}")
+    for color, plen in zip(ORANGES, PLENS):
+        sizes, prop_unique = get_proportion_unique(flatten(lengths[plen]), max_n=args.max_n)
+        plt.plot(sizes, prop_unique, color=color, label=f"p={plen}")
+    format_novelty_plot(args, plt)
+    plt.title(f"n-gram novelty of {name}")
 
     os.makedirs("plots/by-model", exist_ok=True)
     plt.savefig(f"plots/by-model/{clean_model_name(model)}.pdf")
+    plt.close()
+
+def plot_by_plen(args, model="EleutherAI/pythia-12b"):
+    if model == "EleutherAI/pythia-12b":
+        lengths = lengths_12b
+    else:
+        lengths = get_lengths_for_model(model)
+
+    os.makedirs("plots/by-plen", exist_ok=True)
+
+    plt.figure()
+    # Should we just average????
+    buckets = [[np.mean(doc) for doc in lengths[plen]] for plen in ["val"] + PLENS]
+    plt.violinplot(buckets, showmeans=True)
+    plt.xticks(range(1, len(PLENS) + 2), ["val"] + PLENS)
+    plt.xlabel("prompt length")
+    plt.ylabel("mean non-novel suffix length")
+    plt.yscale("log")
+    plt.savefig("plots/by-plen/violin.pdf")
+    plt.close()
+
+    plt.figure()
+    mean_lengths = [np.mean(flatten(lengths[plen])) for plen in PLENS]
+    plt.scatter(PLENS, mean_lengths)
+    plt.xticks(range(1, len(PLENS) + 2), ["val"] + PLENS)
+    plt.xlabel("prompt length")
+    plt.ylabel("mean non-novel suffix length")
+    plt.xscale("symlog")
+    plt.savefig("plots/by-plen/scatter.pdf")
     plt.close()
 
 def plot_by_model(args, filter_fn=None):
@@ -108,13 +145,14 @@ def plot_by_model(args, filter_fn=None):
         model = clean_model_name(doc["meta"]["model"])
         plot_lengths[model].append(lengths)
 
+    # TODO: Make this into a violinplot at some point?
     plt.figure()
     sizes, prop_unique = get_proportion_unique(flatten(plot_lengths["val"]), max_n=args.max_n)
     plt.plot(sizes, prop_unique, label="val", color="gray", linestyle="--")
     for color, key in zip(BLUES, MODELS):
         sizes, prop_unique = get_proportion_unique(flatten(plot_lengths[key]), max_n=args.max_n)
         plt.plot(sizes, prop_unique, label=key.split("-")[-1], color=color)
-    format_novelty_plot(plt, max_n=args.max_n)
+    format_novelty_plot(args, plt)
     plt.savefig("plots/by-model/curves.pdf")
     plt.close()
     
@@ -127,10 +165,9 @@ def plot_by_model(args, filter_fn=None):
         mean_lengths.append(np.mean(flatten(lengths)))
 
     plt.figure()
-    plt.title("non-novel suffix len")
     plt.scatter(sizes, mean_lengths, linestyle="-")
     plt.xlabel("model size")
-    plt.ylabel("mean non-novel suffix len")
+    plt.ylabel("mean non-novel suffix length")
     plt.xscale("log")
     plt.tight_layout()
     plt.savefig("plots/by-model/scatter.pdf")
@@ -160,9 +197,16 @@ def plot_by_domain(args, deduped=False):
 
     for domain in domains:
         plt.figure()
+
+        # Validation set baseline.
         val_lengths = lengths_by_domain[domain, "val"]
         val_sizes, val_prop_unique = get_proportion_unique(flatten(val_lengths), max_n=args.max_n)
         plt.plot(val_sizes, val_prop_unique, linestyle="--", color="gray", label="val")
+
+        # Union bound baseline.
+        sizes, prop_unique = get_novelty_lb(CORPUS_SIZE, entropy=ENTROPY, prob=P_AMBIGUOUS, max_n=args.max_n)
+        plt.plot(sizes, prop_unique, linestyle="--", color="red", label="LB")
+
         for color, plen in zip(ORANGES, PLENS):
             if plen == 0:
                 lengths = lengths_12b[0]
@@ -171,7 +215,7 @@ def plot_by_domain(args, deduped=False):
             sizes, prop_unique = get_proportion_unique(flatten(lengths), max_n=args.max_n)
             plt.plot(sizes, prop_unique, label=f"p={plen}", color=color)
         plt.title(f"n-gram novelty for {domain}" + (" (deduped)" if deduped else ""))
-        format_novelty_plot(plt, max_n=args.max_n)
+        format_novelty_plot(args, plt)
         plt.savefig(f"{dirname}/{domain}.pdf")
         plt.close()
 
@@ -197,7 +241,7 @@ def plot_by_decoding(args):
         sizes, prop_unique = get_proportion_unique(lengths, max_n=args.max_n)
         plt.plot(sizes, prop_unique, label=Rf"$\tau$={temp}", color=color)
     plt.title("n-gram novelty by temperature")
-    format_novelty_plot(plt, max_n=args.max_n)
+    format_novelty_plot(args, plt)
     plt.savefig(f"plots/by-decoding/temp.pdf")
     plt.close()
 
@@ -213,7 +257,7 @@ def plot_by_decoding(args):
         sizes, prop_unique = get_proportion_unique(lengths, max_n=args.max_n)
         plt.plot(sizes, prop_unique, label=Rf"$p$={p}", color=color)
     plt.title("n-gram novelty by top-p")
-    format_novelty_plot(plt, max_n=args.max_n)
+    format_novelty_plot(args, plt)
     plt.savefig(f"plots/by-decoding/top_p.pdf")
     plt.close()
 
@@ -227,7 +271,7 @@ def plot_by_decoding(args):
         sizes, prop_unique = get_proportion_unique(lengths, max_n=args.max_n)
         plt.plot(sizes, prop_unique, label=Rf"$k$={k}", color=color)
     plt.title("n-gram novelty by top-k")
-    format_novelty_plot(plt, max_n=args.max_n)
+    format_novelty_plot(args, plt)
     plt.savefig(f"plots/by-decoding/top_k.pdf")
     plt.close()
 
@@ -240,8 +284,9 @@ if __name__ == "__main__":
 
     lengths_12b = get_lengths_for_model("EleutherAI/pythia-12b")
 
-    plot_model(args, model="EleutherAI/pythia-12b")
-    # plot_by_model(args)
-    # plot_by_domain(args)
-    # plot_by_domain(args, deduped=True)
+    plot_model(args, "EleutherAI/pythia-12b")
+    plot_by_plen(args)
+    plot_by_model(args)
+    plot_by_domain(args)
+    plot_by_domain(args, deduped=True)
     # plot_by_decoding(args)

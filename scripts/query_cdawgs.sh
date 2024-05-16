@@ -35,16 +35,16 @@ TIMEOUT=9999999999
 #     --batch_size $BATCH_SIZE \
 #     --read_timeout $TIMEOUT
 
+# echo "=== Generating by-model results ==="
+# python query_cdawgs.py \
+#     $ROOT/lm-generations/by-model.jsonl \
+#     $ROOT/results/by-model.json \
+#     --batch_size $BATCH_SIZE \
+#     --read_timeout $TIMEOUT
+
 #################################
 # ^ Everything above is done! :)
 #################################
-
-echo "=== Generating by-model results ==="
-python query_cdawgs.py \
-    $ROOT/lm-generations/by-model.jsonl \
-    $ROOT/results/by-model.json \
-    --batch_size $BATCH_SIZE \
-    --read_timeout $TIMEOUT
 
 echo "=== Generating pythia-12b-deduped results ==="
 python query_cdawgs.py \
@@ -53,10 +53,9 @@ python query_cdawgs.py \
     --batch_size $BATCH_SIZE \
     --read_timeout $TIMEOUT
 
-# TODO: Wait to finish
-# echo "=== Generating by-decoding results ==="
-# python query_cdawgs.py \
-#     $ROOT/lm-generations/by-decoding.jsonl \
-#     $ROOT/results/by-decoding.json \
-#     --batch_size $BATCH_SIZE \
-#     --read_timeout $TIMEOUT
+echo "=== Generating by-decoding results ==="
+python query_cdawgs.py \
+    $ROOT/lm-generations/by-decoding.jsonl \
+    $ROOT/results/by-decoding.json \
+    --batch_size $BATCH_SIZE \
+    --read_timeout $TIMEOUT

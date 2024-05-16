@@ -6,7 +6,8 @@ from collections import Counter
 def get_novelty_lb(corpus_size: int, entropy=0.5, prob=1.0, max_n: int = 10):
     lengths = np.arange(max_n) + 1
     coeff = np.log(prob) - entropy
-    return lengths, 1. - corpus_size * np.exp(lengths * coeff)
+    values = 1. - corpus_size * np.exp(lengths * coeff)
+    return lengths, np.maximum(values, 0)
 
 def get_proportion_unique(suffix_contexts, max_n: int = 10):
     """Convert length data to n-gram novelty data"""

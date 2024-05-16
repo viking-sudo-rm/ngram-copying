@@ -97,7 +97,7 @@ printf "beam8" | gantry run \
     --gpus 1 -- python generate_from_lm.py \
         EleutherAI/pythia-12b \
         $PROMPTS_PATH \
-        $OUT_DIR/by-decoding/beam.jsonl \
+        $OUT_DIR/by-decoding/beam8.jsonl \
         --n_tokens=$N_TOKENS \
         --prompt_lengths $PLENGTHS \
         -b 8 \
