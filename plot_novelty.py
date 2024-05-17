@@ -8,6 +8,7 @@ import json
 import os
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+import pandas as pd
 
 from src.data import CorpusData, LMGenerations, Results
 from src.ngram_novelty import get_proportion_unique, get_novelty_lb
@@ -29,7 +30,7 @@ ORANGES = plt.cm.Oranges(np.linspace(0.3, 1, len(PLENS)))
 # Parameters for lower bound curve.
 CORPUS_SIZE = 400 * 10e9
 P_AMBIGUOUS = 0.9
-ENTROPY = 0.8
+ENTROPY = 1.8  # 0.6 bits/byte * 3 bytes/token
 
 def flatten(lists):
     return [item for row in lists for item in row]
@@ -64,15 +65,15 @@ def format_novelty_plot(args, plt):
         plt.xscale("log")
     plt.tight_layout()
 
-def get_lengths_for_model(model: str) -> dict:
+def get_lengths_for_model(model: str, key="lengths") -> dict:
     plot_lengths = defaultdict(list)
-    plot_lengths["val"] = results.val_iid["lengths"]
-    for doc, lengths in zip(lmg.by_model, results.by_model["lengths"]):
+    plot_lengths["val"] = results.val_iid[key]
+    for doc, lengths in zip(lmg.by_model, results.by_model[key]):
         if doc["meta"]["model"] != model:
             continue
         plen = doc["meta"]["prompt_len"]
         plot_lengths[plen].append(lengths)
-    for doc, lengths in zip(lmg.by_model_p, results.by_model_p["lengths"]):
+    for doc, lengths in zip(lmg.by_model_p, results.by_model_p[key]):
         if doc["meta"]["model"] != model:
             continue
         plen = doc["meta"]["prompt_len"]
@@ -149,6 +150,8 @@ def plot_by_model(args, filter_fn=None):
     plt.figure()
     sizes, prop_unique = get_proportion_unique(flatten(plot_lengths["val"]), max_n=args.max_n)
     plt.plot(sizes, prop_unique, label="val", color="gray", linestyle="--")
+    sizes, prop_unique = get_novelty_lb(CORPUS_SIZE, entropy=ENTROPY, prob=P_AMBIGUOUS, max_n=args.max_n)
+    plt.plot(sizes, prop_unique, linestyle="--", color="red", label="LB")
     for color, key in zip(BLUES, MODELS):
         sizes, prop_unique = get_proportion_unique(flatten(plot_lengths[key]), max_n=args.max_n)
         plt.plot(sizes, prop_unique, label=key.split("-")[-1], color=color)
@@ -235,7 +238,9 @@ def plot_by_decoding(args):
     lengths = flatten(lengths_12b["val"])
     sizes, prop_unique = get_proportion_unique(lengths, max_n=args.max_n)
     plt.plot(sizes, prop_unique, color="gray", linestyle="--", label="val")
-    colors = plt.cm.Reds(np.linspace(0.2, 1., len(TEMPS)))
+    sizes, prop_unique = get_novelty_lb(CORPUS_SIZE, entropy=ENTROPY, prob=P_AMBIGUOUS, max_n=args.max_n)
+    plt.plot(sizes, prop_unique, linestyle="--", color="red", label="LB")
+    colors = plt.cm.Purples(np.linspace(0.2, 1., len(TEMPS)))
     for color, temp in zip(colors, TEMPS):
         lengths = lengths_by_dec[f"temp={temp}"]
         sizes, prop_unique = get_proportion_unique(lengths, max_n=args.max_n)
@@ -265,7 +270,7 @@ def plot_by_decoding(args):
     lengths = flatten(lengths_12b["val"])
     sizes, prop_unique = get_proportion_unique(lengths, max_n=args.max_n)
     plt.plot(sizes, prop_unique, color="gray", linestyle="--", label="val")
-    colors = plt.cm.Purples(np.linspace(0.2, 1., len(PS)))
+    colors = plt.cm.Greens(np.linspace(0.2, 1., len(PS)))
     for color, k in zip(colors, KS):
         lengths = lengths_by_dec[f"top_k={k}"]
         sizes, prop_unique = get_proportion_unique(lengths, max_n=args.max_n)
@@ -274,6 +279,42 @@ def plot_by_decoding(args):
     format_novelty_plot(args, plt)
     plt.savefig(f"plots/by-decoding/top_k.pdf")
     plt.close()
+
+def plot_frequency(args):
+    os.makedirs("plots/frequency", exist_ok=True)
+    counts_12b = get_lengths_for_model("EleutherAI/pythia-12b", key="counts")
+    plt.figure()
+
+    # Plot the validation set as a baseline here.
+    df = pd.DataFrame({
+        "lengths": flatten(lengths_12b["val"]),
+        "counts": flatten(counts_12b["val"]),
+    })
+    stats = df.groupby("lengths").median()
+    plt.plot(stats.index[:args.max_n], stats["counts"][:args.max_n], label="val", linestyle="--", color="gray")
+
+    # Find the threshold at which copying happens.
+    sizes, prop_unique = get_novelty_lb(CORPUS_SIZE, entropy=ENTROPY, prob=P_AMBIGUOUS, max_n=args.max_n)
+    idx = np.argmin(np.abs(prop_unique - 0.5))
+    threshold = sizes[idx]
+    plt.axvline(threshold, linestyle="--", color="red", label="LB")
+
+    for plen, color in zip(PLENS, ORANGES):
+        df = pd.DataFrame({
+            "lengths": flatten(lengths_12b[plen]),
+            "counts": flatten(counts_12b[plen]),
+        })
+        # results = df.groupby("lengths").describe()
+        stats = df.groupby("lengths").median()
+        plt.plot(stats.index[:args.max_n], stats["counts"][:args.max_n], label=f"p={plen}", color=color)
+    plt.xlabel("max suffix length")
+    plt.ylabel("median suffix frequency")
+    plt.yscale("log")
+    if args.log_scale:
+        plt.xscale("log")
+    plt.tight_layout()
+    plt.legend()
+    plt.savefig("plots/frequency/freq.pdf")
 
 if __name__ == "__main__":
     args = parse_args()
@@ -290,3 +331,4 @@ if __name__ == "__main__":
     plot_by_domain(args)
     plot_by_domain(args, deduped=True)
     # plot_by_decoding(args)
+    plot_frequency(args)

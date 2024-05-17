@@ -11,51 +11,55 @@ TIMEOUT=9999999999
 # python query_cdawgs.py \
 #     $ROOT/data/by-domain/val.jsonl \
 #     $ROOT/results/val-domain.json \
-#     --batch_size $BATCH_SIZE \
-#     --read_timeout $TIMEOUT
+#     --batch-size $BATCH_SIZE \
+#     --read-timeout $TIMEOUT
 
 # Pass iid val through the CDAWGs.
 # python query_cdawgs.py \
 #     $ROOT/data/iid/val.jsonl \
 #     $ROOT/results/val-iid.json \
-#     --batch_size $BATCH_SIZE \
-#     --read_timeout $TIMEOUT
+#     --batch-size $BATCH_SIZE \
+#     --read-timeout $TIMEOUT
 
 # echo "=== Generating by-domain results ==="
 # python query_cdawgs.py \
 #     $ROOT/lm-generations/by-domain/pythia-12b.jsonl \
 #     $ROOT/results/by-domain.json \
-#     --batch_size $BATCH_SIZE \
-#     --read_timeout $TIMEOUT
+#     --batch-size $BATCH_SIZE \
+#     --read-timeout $TIMEOUT
 
 # echo "=== Generating by-domain-deduped results ==="
 # python query_cdawgs.py \
 #     $ROOT/lm-generations/deduped/by-domain/pythia-12b-deduped.jsonl \
 #     $ROOT/results/by-domain-deduped.json \
-#     --batch_size $BATCH_SIZE \
-#     --read_timeout $TIMEOUT
+#     --batch-size $BATCH_SIZE \
+#     --read-timeout $TIMEOUT
 
 # echo "=== Generating by-model results ==="
 # python query_cdawgs.py \
 #     $ROOT/lm-generations/by-model.jsonl \
 #     $ROOT/results/by-model.json \
-#     --batch_size $BATCH_SIZE \
-#     --read_timeout $TIMEOUT
+#     --batch-size $BATCH_SIZE \
+#     --read-timeout $TIMEOUT
+
+# echo "=== Generating pythia-12b-deduped results ==="
+# python query_cdawgs.py \
+#     $ROOT/lm-generations/deduped/pythia-12b-deduped.jsonl \
+#     $ROOT/results/deduped/pythia-12b-deduped.json \
+#     --batch-size $BATCH_SIZE \
+#     --read-timeout $TIMEOUT
 
 #################################
 # ^ Everything above is done! :)
 #################################
 
-echo "=== Generating pythia-12b-deduped results ==="
-python query_cdawgs.py \
-    $ROOT/lm-generations/deduped/pythia-12b-deduped.jsonl \
-    $ROOT/results/deduped/pythia-12b-deduped.json \
-    --batch_size $BATCH_SIZE \
-    --read_timeout $TIMEOUT
-
-echo "=== Generating by-decoding results ==="
-python query_cdawgs.py \
-    $ROOT/lm-generations/by-decoding.jsonl \
-    $ROOT/results/by-decoding.json \
-    --batch_size $BATCH_SIZE \
-    --read_timeout $TIMEOUT
+# Was crashing a long way into this, so run this way with intermediate cacheing
+mkdir $ROOT/results/by-decoding
+for dec in topp topk temp beam1 beam4 beam8; do
+    echo "=== Generating by-decoding/$dec results ==="
+    python query_cdawgs.py \
+        $ROOT/lm-generations/by-decoding/$dec.jsonl \
+        $ROOT/results/by-decoding/$dec.json \
+        --batch-size $BATCH_SIZE \
+        --read-timeout $TIMEOUT
+done

@@ -3,10 +3,10 @@
 import numpy as np
 from collections import Counter
 
-def get_novelty_lb(corpus_size: int, entropy=0.5, prob=1.0, max_n: int = 10):
+def get_novelty_lb(corpus_size: int, entropy=1.0, prob=1.0, max_n: int = 10):
     lengths = np.arange(max_n) + 1
-    coeff = np.log(prob) - entropy
-    values = 1. - corpus_size * np.exp(lengths * coeff)
+    coeff = np.log2(prob) - entropy
+    values = 1. - corpus_size * np.exp2(lengths * coeff)
     return lengths, np.maximum(values, 0)
 
 def get_proportion_unique(suffix_contexts, max_n: int = 10):

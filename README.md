@@ -87,3 +87,9 @@ scripts/query_cdawgs.sh
 ```
 
 You can also copy and paste specific commands from that script to just run parts of it.
+
+### To Plot Results
+
+```bash
+python plot_novelty.py -n=100 --log-scale
+```
