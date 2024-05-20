@@ -10,8 +10,6 @@ from tqdm import trange
 import argparse
 import json
 import asyncio
-from httpx import ReadError
-from httpcore import RemoteProtocolError
 from collections import defaultdict
 
 from src.async_client import AsyncRustyDawgClient
@@ -42,29 +40,19 @@ def get_json(args, blobs):
             #     tokens[-1] = tokens[-1][prompt_len:]
         return {"tokens": tokens}
 
-async def query(api_blob, n_tries: int = 10, read_timeout: int = 1000):
-    try:
-        client = AsyncRustyDawgClient(hosts, read_timeout=read_timeout)
-        return await client.query(api_blob)
-    except (ReadError, RemoteProtocolError):
-        if n_tries == 0:
-            raise RuntimeError("max # of tries exceeded")
-        else:
-            return query(api_blob, n_tries - 1)
-
 async def main(args):
     # Assumes the input is in .jsonl format with a "text" field.
     with open(args.text_path, "r") as fh:
         blobs = [json.loads(line) for line in fh]
 
-    global hosts
     hosts = [f"localhost:{port}" for port in range(args.start_port, args.end_port)]
     print("Hosts:", hosts)
     results = defaultdict(list)
     for b in trange(0, len(blobs), args.batch_size):
         batch = blobs[b:b + args.batch_size]
         api_blob = get_json(args, batch)
-        batch_results = await query(api_blob, args.n_tries, args.read_timeout)
+        client = AsyncRustyDawgClient(hosts, read_timeout=args.read_timeout)
+        batch_results = await client.query(api_blob, n_tries=args.n_tries)
         for key, values in batch_results.items():
             results[key].extend(values)
 

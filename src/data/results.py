@@ -1,25 +1,43 @@
+from typing import Optional
 import os
 from typing import NamedTuple
 
 from .utils import try_load_json
 
 class Results(NamedTuple):
-    val_by_domain: dict
-    val_iid: dict
-    by_domain: dict
-    by_domain_deduped: dict
-    by_model: dict
-    by_model_p: dict
-    by_decoding: dict
+    val_by_domain: Optional[dict]
+    val_iid: Optional[dict]
+    by_domain: Optional[dict]
+    by_domain_deduped: Optional[dict]
+    by_model: Optional[dict]
+    by_model_p: Optional[dict]
+    losses: Optional[dict]
+    by_topp: Optional[dict]
+    by_topk: Optional[dict]
+    by_temp: Optional[dict]
+    beam1: Optional[dict]
+    beam4: Optional[dict]
+    beam8: Optional[dict]
 
     @classmethod
     def load(cls, root):
-        return cls(
-            val_by_domain=try_load_json(os.path.join(root, "results/val.json")),
-            val_iid=try_load_json(os.path.join(root, "results/val-iid.json")),
-            by_domain=try_load_json(os.path.join(root, "results/by-domain.json")),
-            by_domain_deduped=try_load_json(os.path.join(root, "results/by-domain-deduped.json")),
-            by_model=try_load_json(os.path.join(root, "results/by-model.json")),
-            by_model_p=try_load_json(os.path.join(root, "results/by-model-p.json")),
-            by_decoding=try_load_json(os.path.join(root, "results/by-decoding.json")),
-        )
+        results = {
+            "val_by_domain": "val.json",
+            "val_iid": "val-iid.json",
+            "by_domain": "by-domain.json",
+            "by_domain_deduped": "by-domain-deduped.json",
+            "by_model": "by-model.json",
+            "by_model_p": "by-model-p.json",
+            "losses": "perplexity/pythia-12b.json",
+            "by_topp": "by-decoding/topp.json",
+            "by_topk": "by-decoding/topk.json",
+            "by_temp": "by-decoding/temp.json",
+            "beam1": "by-decoding/beam1.json",
+            "beam4": "by-decoding/beam4.json",
+            "beam8": "by-decoding/beam8.json",
+        }
+
+        return cls(**{
+            name: try_load_json(os.path.join(root, "results", path))
+            for name, path in results.items()
+        })

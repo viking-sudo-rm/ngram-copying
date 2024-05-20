@@ -20,6 +20,7 @@ def parse_args():
     parser.add_argument("-t", "--tokenizer", type=str, default="EleutherAI/pythia-12b")
     parser.add_argument("--max_val_tokens", type=int, default=1000)
     parser.add_argument("--by_domain", action="store_true")
+    parser.add_argument("--no_val", action="store_true")
     return parser.parse_args()
 
 class Jsonl:
@@ -80,6 +81,9 @@ def main(args):
         prompts = Jsonl.sample_from(args.train_path, args.n_samples)
     prompts.save(args.prompts_save_path)
     print(prompts.get_domain_counts())
+
+    if args.no_val:
+        exit()
 
     print("\nSampling and saving validation documents...")
     if args.by_domain:

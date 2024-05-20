@@ -88,6 +88,14 @@ scripts/query_cdawgs.sh
 
 You can also copy and paste specific commands from that script to just run parts of it.
 
+### To Compute Perplexity of Validation Text
+
+```bash
+python score_perplexity.py \
+    $ROOT/data/iid/val.jsonl \
+    $ROOT/results/perplexity/pythia-12b.json
+```
+
 ### To Plot Results
 
 ```bash

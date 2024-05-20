@@ -9,7 +9,10 @@ import os
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import pandas as pd
+from copy import deepcopy
 
+from src.plots import *
+from src.plots.by_decoding import DecodingPlots
 from src.data import CorpusData, LMGenerations, Results
 from src.ngram_novelty import get_proportion_unique, get_novelty_lb
 
@@ -17,34 +20,9 @@ plt.rcParams.update({'font.size': 13})
 
 MODELS = ["pythia-70m", "pythia-160m", "pythia-410m", "pythia-1b", "pythia-1.4b", "pythia-2.8b",
           "pythia-6.9b", "pythia-12b"]
-PLENS = [0, 1, 10, 100]
-
-# Decoding parameters.
-TEMPS = [0., 0.85, 0.9, 0.95, 1.0, 1.05, 1.1, 2.0]
-KS = [20, 80, 160, "$\\infty$"]
-PS = [0.85, 0.9, 0.95, 1.0]
 
 BLUES = plt.cm.Blues(np.linspace(0.2, 1, len(MODELS)))
 ORANGES = plt.cm.Oranges(np.linspace(0.3, 1, len(PLENS)))
-
-# Parameters for lower bound curve.
-CORPUS_SIZE = 400 * 10e9
-P_AMBIGUOUS = 0.9
-ENTROPY = 1.8  # 0.6 bits/byte * 3 bytes/token
-
-def flatten(lists):
-    return [item for row in lists for item in row]
-
-def clean_model_name(model):
-    return model.replace("EleutherAI/", "")
-
-def clean_size(size) -> float:
-    if size.endswith("m"):
-        return float(size[:-1]) * 1e6
-    elif size.endswith("b"):
-        return float(size[:-1]) * 1e9
-    else:
-        raise ValueError
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -53,17 +31,6 @@ def parse_args():
     parser.add_argument("--max-n", "-n", type=int, default=10)
     parser.add_argument("--log-scale", action="store_true")
     return parser.parse_args()
-
-def format_novelty_plot(args, plt):
-    plt.legend()
-    # plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='small')
-    plt.xlabel("n-gram size")
-    plt.ylabel("% novel")
-    plt.xticks(list(range(1, args.max_n + 1)))
-    plt.ylim([0, 1])
-    if args.log_scale:
-        plt.xscale("log")
-    plt.tight_layout()
 
 def get_lengths_for_model(model: str, key="lengths") -> dict:
     plot_lengths = defaultdict(list)
@@ -90,11 +57,11 @@ def plot_model(args, model="EleutherAI/pythia-12b", name="Pythia-12B"):
     
     # Validation baseline.
     sizes, prop_unique = get_proportion_unique(flatten(lengths["val"]), max_n=args.max_n)
-    plt.plot(sizes, prop_unique, linestyle="--", color="gray", label="val")
+    plt.plot(sizes, prop_unique, linestyle="--", color=GRAY, label="val")
     
     # Union bound baseline.
     sizes, prop_unique = get_novelty_lb(CORPUS_SIZE, entropy=ENTROPY, prob=P_AMBIGUOUS, max_n=args.max_n)
-    plt.plot(sizes, prop_unique, linestyle="--", color="red", label="LB")
+    plt.plot(sizes, prop_unique, linestyle="--", color=MUTED_RED, label="LB")
     
     for color, plen in zip(ORANGES, PLENS):
         sizes, prop_unique = get_proportion_unique(flatten(lengths[plen]), max_n=args.max_n)
@@ -222,64 +189,6 @@ def plot_by_domain(args, deduped=False):
         plt.savefig(f"{dirname}/{domain}.pdf")
         plt.close()
 
-def plot_by_decoding(args):
-    os.makedirs("plots/by-decoding", exist_ok=True)
-
-    lengths_by_dec = defaultdict(list)
-    for doc, lengths in zip(lmg.by_decoding, results.by_decoding["lengths"]):
-        decoding = doc["meta"]["decoding"]
-        lengths_by_dec[decoding].extend(lengths)
-    lengths_by_dec["temp=1.0"] = flatten(lengths_12b[0])
-    lengths_by_dec["top_p=1.0"] = flatten(lengths_12b[0])
-    lengths_by_dec["top_k=$\\infty$"] = flatten(lengths_12b[0])
-
-    # Create temperature plot.
-    plt.figure()
-    lengths = flatten(lengths_12b["val"])
-    sizes, prop_unique = get_proportion_unique(lengths, max_n=args.max_n)
-    plt.plot(sizes, prop_unique, color="gray", linestyle="--", label="val")
-    sizes, prop_unique = get_novelty_lb(CORPUS_SIZE, entropy=ENTROPY, prob=P_AMBIGUOUS, max_n=args.max_n)
-    plt.plot(sizes, prop_unique, linestyle="--", color="red", label="LB")
-    colors = plt.cm.Purples(np.linspace(0.2, 1., len(TEMPS)))
-    for color, temp in zip(colors, TEMPS):
-        lengths = lengths_by_dec[f"temp={temp}"]
-        sizes, prop_unique = get_proportion_unique(lengths, max_n=args.max_n)
-        plt.plot(sizes, prop_unique, label=Rf"$\tau$={temp}", color=color)
-    plt.title("n-gram novelty by temperature")
-    format_novelty_plot(args, plt)
-    plt.savefig(f"plots/by-decoding/temp.pdf")
-    plt.close()
-
-    # Create top p plot.
-    # FIXME: p is overloaded between prefix length and here.
-    plt.figure()
-    lengths = flatten(lengths_12b["val"])
-    sizes, prop_unique = get_proportion_unique(lengths, max_n=args.max_n)
-    plt.plot(sizes, prop_unique, color="gray", linestyle="--", label="val")
-    colors = plt.cm.Greens(np.linspace(0.2, 1., len(PS)))
-    for color, p in zip(colors, PS):
-        lengths = lengths_by_dec[f"top_p={p}"]
-        sizes, prop_unique = get_proportion_unique(lengths, max_n=args.max_n)
-        plt.plot(sizes, prop_unique, label=Rf"$p$={p}", color=color)
-    plt.title("n-gram novelty by top-p")
-    format_novelty_plot(args, plt)
-    plt.savefig(f"plots/by-decoding/top_p.pdf")
-    plt.close()
-
-    plt.figure()
-    lengths = flatten(lengths_12b["val"])
-    sizes, prop_unique = get_proportion_unique(lengths, max_n=args.max_n)
-    plt.plot(sizes, prop_unique, color="gray", linestyle="--", label="val")
-    colors = plt.cm.Greens(np.linspace(0.2, 1., len(PS)))
-    for color, k in zip(colors, KS):
-        lengths = lengths_by_dec[f"top_k={k}"]
-        sizes, prop_unique = get_proportion_unique(lengths, max_n=args.max_n)
-        plt.plot(sizes, prop_unique, label=Rf"$k$={k}", color=color)
-    plt.title("n-gram novelty by top-k")
-    format_novelty_plot(args, plt)
-    plt.savefig(f"plots/by-decoding/top_k.pdf")
-    plt.close()
-
 def plot_frequency(args):
     os.makedirs("plots/frequency", exist_ok=True)
     counts_12b = get_lengths_for_model("EleutherAI/pythia-12b", key="counts")
@@ -316,6 +225,42 @@ def plot_frequency(args):
     plt.legend()
     plt.savefig("plots/frequency/freq.pdf")
 
+def plot_loss(args):
+    os.makedirs("plots/loss", exist_ok=True)
+
+    model = results.losses["model"]
+    losses = results.losses["losses"]
+    lengths = results.val_iid["lengths"]
+    lengths = [li[:-1] for li in lengths]
+    counts = results.val_iid["counts"]
+    counts = [li[:-1] for li in counts]
+    df = pd.DataFrame({
+        "lengths": flatten(lengths),
+        "counts": flatten(counts),
+        "losses": flatten(losses),
+    })
+    stats = df.groupby("lengths").mean()
+
+    plt.figure()
+
+    fig, ax1 = plt.subplots(1, 1)
+    ax1.plot(stats.index[:args.max_n], stats["losses"][:args.max_n], color="orange")
+    ax1.set_ylabel("mean token loss", color="orange")
+    # ax1.tick_params("y", color="orange")
+
+    ax2 = plt.twinx()
+    ax2.plot(stats.index[:args.max_n], stats["counts"][:args.max_n], color="gray", linestyle="--")
+    ax2.set_yscale("log")
+    ax2.set_ylabel("mean pretrain. freq.", color="gray")
+    # ax2.tick_params("y", colors="gray")
+
+    plt.xlabel("max suffix length")
+    # plt.ylabel(f"mean token loss ({model})")
+    if args.log_scale:
+        plt.xscale("log")
+    plt.tight_layout()
+    plt.savefig("plots/loss/loss.pdf")
+
 if __name__ == "__main__":
     args = parse_args()
 
@@ -325,10 +270,20 @@ if __name__ == "__main__":
 
     lengths_12b = get_lengths_for_model("EleutherAI/pythia-12b")
 
-    plot_model(args, "EleutherAI/pythia-12b")
-    plot_by_plen(args)
-    plot_by_model(args)
-    plot_by_domain(args)
-    plot_by_domain(args, deduped=True)
-    # plot_by_decoding(args)
-    plot_frequency(args)
+    # Main plots.
+    # plot_model(args, "EleutherAI/pythia-12b")
+    # plot_by_plen(args)
+    # plot_frequency(args)
+    # plot_loss(args)
+
+    # Model size and domain experiments.
+    # plot_by_model(args)
+    # plot_by_domain(args)
+    # plot_by_domain(args, deduped=True)
+
+    # Decoding experiments.
+    decoding = DecodingPlots(args)
+    decoding.plot_by_topk(lmg, results, lengths_12b)
+    decoding.plot_by_topp(lmg, results, lengths_12b)
+    # decoding.plot_by_temp(lmg, results, lengths_12b)
+    decoding.plot_by_beam(lmg, results, lengths_12b)
