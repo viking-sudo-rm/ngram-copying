@@ -4,7 +4,7 @@ ROOT=${ROOT:-"/net/nfs.cirrascale/allennlp/willm/ngram-copying"}
 PROMPTS_PATH=$ROOT/data/cosmopedia/prompts-iid.jsonl
 OUT_DIR=$ROOT/lm-generations/cosmopedia
 N_TOKENS=1000
-PLENGTHS="0 1 10 100"
+PLENGTHS="0"
 # FIXME: Unify with decoding script??? Just invoke different arguments?
 
 echo "===== sample ====="
