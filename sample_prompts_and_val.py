@@ -21,29 +21,36 @@ def parse_args():
     parser.add_argument("--max_val_tokens", type=int, default=1000)
     parser.add_argument("--by_domain", action="store_true")
     parser.add_argument("--no_val", action="store_true")
+    parser.add_argument("--format", choices=["pile", "cosmopedia"], default="pile")
     return parser.parse_args()
 
+DOMAIN_KEYS = {
+    "pile": "pile_set_name",
+    "cosmopedia": "split",
+}
+
 class Jsonl:
-    def __init__(self, lines):
+    def __init__(self, lines, fmt):
         self.lines = lines
+        self.fmt = fmt
 
     @classmethod
-    def sample_from(cls, path: str, n_samples: int):
+    def sample_from(cls, path: str, n_samples: int, **kwargs):
         with open(path) as fh:
             lines = fh.readlines()
         sampled_lines = random.sample(lines, n_samples)
         assert all(line.strip() for line in sampled_lines)
-        return cls(sampled_lines)
+        return cls(sampled_lines, **kwargs)
     
     @classmethod
-    def sample_by_domain(cls, path: str, n_samples: int):
+    def sample_by_domain(cls, path: str, n_samples: int, **kwargs):
         with open(path) as fh:
             lines = fh.readlines()
         blobs = [json.loads(line) for line in lines]
 
         by_domain = defaultdict(list)
         for blob in blobs:
-            domain = blob["meta"]["pile_set_name"]
+            domain = self.get_domain(blob)
             by_domain[domain].append(blob)
 
         sampled_lines = []
@@ -52,17 +59,17 @@ class Jsonl:
                 blobs = random.sample(blobs, n_samples)
             sampled_lines.extend(json.dumps(blob) for blob in blobs)
         
-        return cls(sampled_lines)
+        return cls(sampled_lines, **kwargs)
     
     def get_domain_counts(self):
         blobs = [json.loads(line) for line in self.lines]
-        domains = [blob["meta"]["pile_set_name"] for blob in blobs]
+        domains = [self.get_domain(blob) for blob in blobs]
         return Counter(domains)
 
     def tokenize_and_trim(self, tokenizer, max_tokens: int):
         blobs = [json.loads(line) for line in self.lines]
         tokens = [tokenizer.encode(blob["text"]) for blob in blobs]
-        metas = [blob["meta"] for blob in blobs]
+        metas = [self.get_meta(blob) for blob in blobs]
         blobs = [{"tokens": t[:max_tokens], "meta": m} for t, m in zip(tqdm(tokens), metas)]
         self.lines = [json.dumps(blob) for blob in blobs]
 
@@ -71,14 +78,28 @@ class Jsonl:
             for line in self.lines:
                 fh.write(line.strip() + "\n")
 
+    def get_meta(self, blob):
+        match self.fmt:
+            case "pile":
+                return blob["meta"]
+            case "cosmopedia":
+                return {k: v for k, v in blob.items() if k != "text"}
+            case _:
+                raise ValueError(f"Unknown format {self.fmt}")
+
+    def get_domain(self, blob):
+        meta = self.get_meta(blob)
+        key = DOMAIN_KEYS[self.fmt]
+        return meta[key]
+
 def main(args):
     random.seed(args.seed)
 
     print("Sampling and saving prompts...")
     if args.by_domain:
-        prompts = Jsonl.sample_by_domain(args.train_path, args.n_samples)
+        prompts = Jsonl.sample_by_domain(args.train_path, args.n_samples, fmt=args.format)
     else:
-        prompts = Jsonl.sample_from(args.train_path, args.n_samples)
+        prompts = Jsonl.sample_from(args.train_path, args.n_samples, fmt=args.format)
     prompts.save(args.prompts_save_path)
     print(prompts.get_domain_counts())
 

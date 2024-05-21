@@ -4,7 +4,7 @@
 
 This library uses CDAWGs (data structures for fast search in massive text corpora) to study the copying behavior of large language models. Specifically, we use a CDAWG built on the Pile to study the copying behavior of the Pythia models.
 
-## Usage
+## Experiments on the Pile
 
 First set the environment variable:
 ```bash
@@ -100,4 +100,22 @@ python score_perplexity.py \
 
 ```bash
 python plot_novelty.py -n=100 --log-scale
+```
+
+## Cosmopedia Experiments
+
+Roughly the same workflow as for the Pile. To sample prompts:
+
+```bash
+python sample_prompts_and_val.py \
+    --train_path /net/nfs.cirrascale/allennlp/willm/data/cosmopedia/cat.jsonl \
+    --prompts_save_path /net/nfs.cirrascale/allennlp/willm/ngram-copying/data/cosmopedia/prompts-iid.jsonl \
+    --n_samples 500 \
+    --format cosmopedia \
+    --tokenizer HuggingFaceTB/cosmo-1b \
+    --no_val
+```
+
+```bash
+scripts/generate_cosmopedia.sh
 ```
