@@ -4,7 +4,7 @@
 # Normally, the DAWG seems to be able to run on disk comfortably at 1000 tok/sec
 
 ROOT=${ROOT:-"/net/nfs.cirrascale/allennlp/willm/ngram-copying"}
-BATCH_SIZE=100
+BATCH_SIZE=500
 TIMEOUT=999999999999
 
 # Pass by-domain val through the CDAWGs.
@@ -55,7 +55,9 @@ TIMEOUT=999999999999
 
 # Was crashing a long way into this, so run this way with intermediate cacheing
 mkdir $ROOT/results/by-decoding
-for dec in topp topk temp beam1 beam4 beam8; do
+# decs="topp topk temp beam1 beam4 beam8"
+decs="temp"
+for dec in $decs; do
     echo "=== Generating by-decoding/$dec results ==="
     python query_cdawgs.py \
         $ROOT/lm-generations/by-decoding/$dec.jsonl \

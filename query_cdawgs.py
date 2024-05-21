@@ -56,9 +56,9 @@ async def main(args):
         for key, values in batch_results.items():
             results[key].extend(values)
 
-    # Save results in .json format to the specified file. Document order will be the same as in input file.
-    with open(args.save_path, "w") as fh:
-        json.dump(dict(results), fh)
+        # Save intermediate results.
+        with open(args.save_path, "w") as fh:
+            json.dump(dict(results), fh)
 
 if __name__ == "__main__":
     args = parse_args()

@@ -40,6 +40,9 @@ printf "topp" | gantry run \
         -p 0.85 0.90 0.95
 
 echo "=== temp ==="
+# Not doing different p-lengths for simplicity
+# Remove 0.00 and 1.00 because we have them!
+# Remove 2.00 because it might have been crashing things?
 printf "temp" | gantry run \
     --workspace ai2/rusty-dawg \
     --cluster ai2/allennlp-cirrascale \
@@ -51,8 +54,8 @@ printf "temp" | gantry run \
         $PROMPTS_PATH \
         $OUT_DIR/by-decoding/temp.jsonl \
         --n_tokens=$N_TOKENS \
-        --prompt_lengths $PLENGTHS \
-        -t 0.00 0.85 0.90 0.95 1.05 1.10 2.00
+        --prompt_lengths 0 \
+        -t 0.50 0.85 0.90 0.95 1.05 1.10
 
 echo "=== beam1 ==="
 printf "beam1" | gantry run \

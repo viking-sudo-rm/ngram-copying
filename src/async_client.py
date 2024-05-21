@@ -48,7 +48,7 @@ class AsyncRustyDawgClient:
             if n_tries == 0:
                 raise RuntimeError("max # of tries exceeded")
             else:
-                return self.query(json, n_tries - 1)
+                return await self.query(json, n_tries - 1)
 
 async def test_async():
     json = {"text": ["Four score and seven years ago, Rusty DAWG was launched."]}

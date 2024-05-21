@@ -116,9 +116,9 @@ def plot_by_model(args, filter_fn=None):
     # TODO: Make this into a violinplot at some point?
     plt.figure()
     sizes, prop_unique = get_proportion_unique(flatten(plot_lengths["val"]), max_n=args.max_n)
-    plt.plot(sizes, prop_unique, label="val", color="gray", linestyle="--")
+    plt.plot(sizes, prop_unique, label="val", color=GRAY, linestyle="--")
     sizes, prop_unique = get_novelty_lb(CORPUS_SIZE, entropy=ENTROPY, prob=P_AMBIGUOUS, max_n=args.max_n)
-    plt.plot(sizes, prop_unique, linestyle="--", color="red", label="LB")
+    plt.plot(sizes, prop_unique, linestyle="--", color=MUTED_RED, label="LB")
     for color, key in zip(BLUES, MODELS):
         sizes, prop_unique = get_proportion_unique(flatten(plot_lengths[key]), max_n=args.max_n)
         plt.plot(sizes, prop_unique, label=key.split("-")[-1], color=color)
@@ -171,11 +171,11 @@ def plot_by_domain(args, deduped=False):
         # Validation set baseline.
         val_lengths = lengths_by_domain[domain, "val"]
         val_sizes, val_prop_unique = get_proportion_unique(flatten(val_lengths), max_n=args.max_n)
-        plt.plot(val_sizes, val_prop_unique, linestyle="--", color="gray", label="val")
+        plt.plot(val_sizes, val_prop_unique, linestyle="--", color=GRAY, label="val")
 
         # Union bound baseline.
         sizes, prop_unique = get_novelty_lb(CORPUS_SIZE, entropy=ENTROPY, prob=P_AMBIGUOUS, max_n=args.max_n)
-        plt.plot(sizes, prop_unique, linestyle="--", color="red", label="LB")
+        plt.plot(sizes, prop_unique, linestyle="--", color=MUTED_RED, label="LB")
 
         for color, plen in zip(ORANGES, PLENS):
             if plen == 0:
@@ -200,13 +200,13 @@ def plot_frequency(args):
         "counts": flatten(counts_12b["val"]),
     })
     stats = df.groupby("lengths").median()
-    plt.plot(stats.index[:args.max_n], stats["counts"][:args.max_n], label="val", linestyle="--", color="gray")
+    plt.plot(stats.index[:args.max_n], stats["counts"][:args.max_n], label="val", linestyle="--", color=GRAY)
 
     # Find the threshold at which copying happens.
     sizes, prop_unique = get_novelty_lb(CORPUS_SIZE, entropy=ENTROPY, prob=P_AMBIGUOUS, max_n=args.max_n)
     idx = np.argmin(np.abs(prop_unique - 0.5))
     threshold = sizes[idx]
-    plt.axvline(threshold, linestyle="--", color="red", label="LB")
+    plt.axvline(threshold, linestyle="--", color=MUTED_RED, label="LB")
 
     for plen, color in zip(PLENS, ORANGES):
         df = pd.DataFrame({
@@ -249,10 +249,10 @@ def plot_loss(args):
     # ax1.tick_params("y", color="orange")
 
     ax2 = plt.twinx()
-    ax2.plot(stats.index[:args.max_n], stats["counts"][:args.max_n], color="gray", linestyle="--")
+    ax2.plot(stats.index[:args.max_n], stats["counts"][:args.max_n], color=GRAY, linestyle="--")
     ax2.set_yscale("log")
-    ax2.set_ylabel("mean pretrain. freq.", color="gray")
-    # ax2.tick_params("y", colors="gray")
+    ax2.set_ylabel("mean pretrain. freq.", color=GRAY)
+    # ax2.tick_params("y", colors=GRAY)
 
     plt.xlabel("max suffix length")
     # plt.ylabel(f"mean token loss ({model})")
