@@ -67,7 +67,7 @@ printf "temp" | gantry run \
         --prompt_lengths $PLENGTHS \
         -t 0.50 0.85 0.90 0.95 1.05 1.10
 
-for b in "1 4 8"; do
+for b in 1 4 8; do
     echo "===== beam$b ====="
     printf "beam$b" | gantry run \
     --workspace ai2/rusty-dawg \
