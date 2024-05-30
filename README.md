@@ -115,7 +115,7 @@ python completion_loss.py \
 ### To Plot Results
 
 ```bash
-python plot_novelty.py -n=100 --log-scale
+python plot_novelty.py -n=100 --log-scale --no-plen
 ```
 
 ## Cosmopedia Experiments

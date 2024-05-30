@@ -278,7 +278,7 @@ if __name__ == "__main__":
     # plot_loss(args)
 
     # Model size and domain experiments.
-    # plot_by_model(args)
+    plot_by_model(args)
     # plot_by_domain(args)
     # plot_by_domain(args, deduped=True)
 
