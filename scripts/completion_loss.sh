@@ -4,6 +4,7 @@ ROOT=${ROOT:-"/net/nfs.cirrascale/allennlp/willm/ngram-copying"}
 
 SIZES=("70m" "160m" "410m" "1b" "1.4b" "2.8b" "6.9b" "12b")
 
+mkdir $ROOT/results/completion-loss
 for idx in "${!SIZES[@]}"; do
     model="pythia-${SIZES[idx]}"
     echo "===== $model-loss ====="
@@ -15,6 +16,6 @@ for idx in "${!SIZES[@]}"; do
         --priority normal \
         --gpus 1 -- python completion_loss.py \
             $ROOT/data/completion-loss/val.jsonl \
-            $ROOT/results/perplexity/$model.json \
+            $ROOT/results/completion-loss/$model.json \
             --model EleutherAI/$model
 done

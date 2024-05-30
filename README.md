@@ -109,7 +109,7 @@ To run just one:
 ```bash
 python completion_loss.py \
     $ROOT/data/completion-loss/val.jsonl \
-    $ROOT/results/perplexity/pythia-12b.json
+    $ROOT/results/completion-loss/pythia-12b.json
 ```
 
 ### To Plot Results
