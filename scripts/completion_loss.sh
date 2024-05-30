@@ -3,6 +3,7 @@
 ROOT=${ROOT:-"/net/nfs.cirrascale/allennlp/willm/ngram-copying"}
 
 SIZES=("70m" "160m" "410m" "1b" "1.4b" "2.8b" "6.9b" "12b")
+SAMPLE="iid"  # TODO: Redo with "completion-loss"
 
 mkdir $ROOT/results/completion-loss
 for idx in "${!SIZES[@]}"; do

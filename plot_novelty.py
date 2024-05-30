@@ -226,42 +226,6 @@ def plot_frequency(args):
     plt.legend()
     plt.savefig("plots/frequency/freq.pdf")
 
-def plot_loss(args):
-    os.makedirs("plots/loss", exist_ok=True)
-
-    model = results.losses["model"]
-    losses = results.losses["losses"]
-    lengths = results.val_iid["lengths"]
-    lengths = [li[:-1] for li in lengths]
-    counts = results.val_iid["counts"]
-    counts = [li[:-1] for li in counts]
-    df = pd.DataFrame({
-        "lengths": flatten(lengths),
-        "counts": flatten(counts),
-        "losses": flatten(losses),
-    })
-    stats = df.groupby("lengths").mean()
-
-    plt.figure()
-
-    fig, ax1 = plt.subplots(1, 1)
-    ax1.plot(stats.index[:args.max_n], stats["losses"][:args.max_n], color="orange")
-    ax1.set_ylabel("mean token loss", color="orange")
-    # ax1.tick_params("y", color="orange")
-
-    ax2 = plt.twinx()
-    ax2.plot(stats.index[:args.max_n], stats["counts"][:args.max_n], color=GRAY, linestyle="--")
-    ax2.set_yscale("log")
-    ax2.set_ylabel("mean pretrain. freq.", color=GRAY)
-    # ax2.tick_params("y", colors=GRAY)
-
-    plt.xlabel("max suffix length")
-    # plt.ylabel(f"mean token loss ({model})")
-    if args.log_scale:
-        plt.xscale("log")
-    plt.tight_layout()
-    plt.savefig("plots/loss/loss.pdf")
-
 if __name__ == "__main__":
     args = parse_args()
 
@@ -275,7 +239,6 @@ if __name__ == "__main__":
     # plot_model(args, "EleutherAI/pythia-12b")
     # plot_by_plen(args)
     # plot_frequency(args)
-    # plot_loss(args)
 
     # Model size and domain experiments.
     plot_by_model(args)

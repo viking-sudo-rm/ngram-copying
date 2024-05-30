@@ -98,7 +98,7 @@ python sample_prompts_and_val.py --n_samples 2000 \
     --val_save_path $ROOT/data/completion-loss/val.jsonl
 ```
 
-To launch all jobs as Beaker bash jobs:
+To launch all jobs as Beaker bash jobs (TODO: redo this with larger):
 
 ```bash
 scripts/compute_losses.sh
