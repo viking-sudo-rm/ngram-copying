@@ -13,6 +13,7 @@ from copy import deepcopy
 
 from src.plots import *
 from src.plots.by_decoding import DecodingPlots
+from src.plots.completion_loss import CompletionLossPlots
 from src.data import CorpusData, LMGenerations, Results
 from src.ngram_novelty import get_proportion_unique, get_novelty_lb
 
@@ -229,11 +230,11 @@ def plot_frequency(args):
 if __name__ == "__main__":
     args = parse_args()
 
-    data = CorpusData.load(args.root)
-    lmg = LMGenerations.load(args.root)
+    # data = CorpusData.load(args.root)
+    # lmg = LMGenerations.load(args.root)
     results = Results.load(args.root)
 
-    lengths_12b = get_lengths_for_model("EleutherAI/pythia-12b")
+    # lengths_12b = get_lengths_for_model("EleutherAI/pythia-12b")
 
     # Main plots.
     # plot_model(args, "EleutherAI/pythia-12b")
@@ -241,13 +242,17 @@ if __name__ == "__main__":
     # plot_frequency(args)
 
     # Model size and domain experiments.
-    plot_by_model(args)
+    # plot_by_model(args)
     # plot_by_domain(args)
     # plot_by_domain(args, deduped=True)
 
     # Decoding experiments.
-    decoding = DecodingPlots(args)
-    decoding.plot_by_topk(lmg, results, lengths_12b)
-    decoding.plot_by_topp(lmg, results, lengths_12b)
-    decoding.plot_by_temp(lmg, results, lengths_12b)
-    decoding.plot_by_beam(lmg, results, lengths_12b)
+    # decoding = DecodingPlots(args)
+    # decoding.plot_by_topk(lmg, results, lengths_12b)
+    # decoding.plot_by_topp(lmg, results, lengths_12b)
+    # decoding.plot_by_temp(lmg, results, lengths_12b)
+    # decoding.plot_by_beam(lmg, results, lengths_12b)
+
+    # Completion loss experiments.
+    closs = CompletionLossPlots(args)
+    closs.plot_by_model(results)

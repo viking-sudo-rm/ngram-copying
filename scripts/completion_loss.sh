@@ -16,7 +16,7 @@ for idx in "${!SIZES[@]}"; do
         --budget ai2/allennlp \
         --priority normal \
         --gpus 1 -- python completion_loss.py \
-            $ROOT/data/completion-loss/val.jsonl \
+            $ROOT/data/$SAMPLE/val.jsonl \
             $ROOT/results/completion-loss/$model.json \
             --model EleutherAI/$model
 done
