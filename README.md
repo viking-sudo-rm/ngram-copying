@@ -88,9 +88,17 @@ scripts/query_cdawgs.sh
 
 You can also copy and paste specific commands from that script to just run parts of it.
 
-### To Compute Perplexity of Validation Text
+### To Compute Completion Loss Experiments
 
-To launch all jobs:
+To sample more validation data:
+```bash
+mkdir $ROOT/data/completion-loss
+python sample_prompts_and_val.py --n_samples 2000 \
+    --prompts_save_path $ROOT/data/completion-loss/prompts.jsonl \
+    --val_save_path $ROOT/data/completion-loss/val.jsonl
+```
+
+To launch all jobs as Beaker bash jobs:
 
 ```bash
 scripts/compute_losses.sh
@@ -99,8 +107,8 @@ scripts/compute_losses.sh
 To run just one:
 
 ```bash
-python score_perplexity.py \
-    $ROOT/data/iid/val.jsonl \
+python completion_loss.py \
+    $ROOT/data/completion-loss/val.jsonl \
     $ROOT/results/perplexity/pythia-12b.json
 ```
 

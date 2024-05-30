@@ -108,9 +108,9 @@ def main(args):
 
     print("\nSampling and saving validation documents...")
     if args.by_domain:
-        val = Jsonl.sample_by_domain(args.val_path, args.n_samples)
+        val = Jsonl.sample_by_domain(args.val_path, args.n_samples, fmt=args.format)
     else:
-        val = Jsonl.sample_from(args.val_path, args.n_samples)
+        val = Jsonl.sample_from(args.val_path, args.n_samples, fmt=args.format)
     tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
     val.tokenize_and_trim(tokenizer, args.max_val_tokens)
     val.save(args.val_save_path)

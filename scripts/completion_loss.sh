@@ -13,8 +13,8 @@ for idx in "${!SIZES[@]}"; do
         --venv base \
         --budget ai2/allennlp \
         --priority normal \
-        --gpus 1 -- python score_perplexity.py \
-            $ROOT/data/iid/val.jsonl \
+        --gpus 1 -- python completion_loss.py \
+            $ROOT/data/completion-loss/val.jsonl \
             $ROOT/results/perplexity/$model.json \
             --model EleutherAI/$model
 done
