@@ -30,6 +30,7 @@ def parse_args():
                         default="/net/nfs.cirrascale/allennlp/willm/ngram-copying")
     parser.add_argument("--max-n", "-n", type=int, default=10)
     parser.add_argument("--log-scale", action="store_true")
+    parser.add_argument("--no-plen", action="store_true", help="Hide plen from titles")
     return parser.parse_args()
 
 def get_lengths_for_model(model: str, key="lengths") -> dict:
@@ -285,5 +286,5 @@ if __name__ == "__main__":
     decoding = DecodingPlots(args)
     decoding.plot_by_topk(lmg, results, lengths_12b)
     decoding.plot_by_topp(lmg, results, lengths_12b)
-    # decoding.plot_by_temp(lmg, results, lengths_12b)
+    decoding.plot_by_temp(lmg, results, lengths_12b)
     decoding.plot_by_beam(lmg, results, lengths_12b)

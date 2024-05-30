@@ -4,7 +4,7 @@
 # Normally, the DAWG seems to be able to run on disk comfortably at 1000 tok/sec
 
 ROOT=${ROOT:-"/net/nfs.cirrascale/allennlp/willm/ngram-copying"}
-BATCH_SIZE=500
+BATCH_SIZE=100
 TIMEOUT=999999999999
 
 # Pass by-domain val through the CDAWGs.

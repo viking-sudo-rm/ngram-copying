@@ -90,6 +90,14 @@ You can also copy and paste specific commands from that script to just run parts
 
 ### To Compute Perplexity of Validation Text
 
+To launch all jobs:
+
+```bash
+scripts/compute_losses.sh
+```
+
+To run just one:
+
 ```bash
 python score_perplexity.py \
     $ROOT/data/iid/val.jsonl \
