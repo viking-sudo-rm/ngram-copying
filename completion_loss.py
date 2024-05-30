@@ -22,7 +22,7 @@ def main(args):
 
     losses = []
     for blob in tqdm(blobs):
-        input_ids = torch.LongTensor(blob["tokens"], device=args.device).unsqueeze(0)
+        input_ids = torch.tensor(blob["tokens"], device=args.device, dtype=torch.LongTensor).unsqueeze(0)
         inputs = {"input_ids": input_ids, "attention_mask": torch.ones_like(input_ids)}
         outputs = model(**inputs)
 
