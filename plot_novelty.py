@@ -15,7 +15,8 @@ from src.plots import *
 from src.plots.by_decoding import DecodingPlots
 from src.plots.completion_loss import CompletionLossPlots
 from src.data import CorpusData, LMGenerations, Results
-from src.ngram_novelty import get_proportion_unique, get_novelty_lb
+from src.ngram_novelty import NgramNovelty
+from src.deduplication import deduplicate
 
 plt.rcParams.update({'font.size': 13})
 
@@ -58,15 +59,30 @@ def plot_model(args, model="EleutherAI/pythia-12b", name="Pythia-12B"):
     plt.figure()
     
     # Validation baseline.
-    sizes, prop_unique = get_proportion_unique(flatten(lengths["val"]), max_n=args.max_n)
-    plt.plot(sizes, prop_unique, linestyle="--", color=GRAY, label="val")
+    val = lengths["val"]
+    # sizes, prop_unique = nov.get_proportion_unique(val)
+    # plt.plot(sizes, prop_unique, linestyle="--", color=GRAY, label="val")
     
+    FILTERS = [float("inf"), 1000, 100, 50, 40, 30, 25, 20, 15, 10]
+    colors = plt.cm.Greys(np.linspace(0.2, 1.0, len(FILTERS)))
+    for color, filter_n in zip(colors, FILTERS):
+        deduped = deduplicate(val, filter_n)
+        sizes, prop_unique = nov.get_proportion_unique(deduped)
+        plt.plot(sizes, prop_unique, linestyle="--", color=color, label=f"val@{filter_n}")
+
+        if isinstance(filter_n, int):
+            # FIXME: why isn't this 100%?
+            print("===", filter_n, "===")
+            print(sizes[:filter_n])
+            print(prop_unique[:filter_n])
+            print("Max before filter:", np.max(prop_unique[:filter_n - 1]))
+
     # Union bound baseline.
-    sizes, prop_unique = get_novelty_lb(CORPUS_SIZE, entropy=ENTROPY, prob=P_AMBIGUOUS, max_n=args.max_n)
+    sizes, prop_unique = nov.get_novelty_lb(CORPUS_SIZE, entropy=ENTROPY, prob=P_AMBIGUOUS)
     plt.plot(sizes, prop_unique, linestyle="--", color=MUTED_RED, label="LB")
     
     for color, plen in zip(ORANGES, PLENS):
-        sizes, prop_unique = get_proportion_unique(flatten(lengths[plen]), max_n=args.max_n)
+        sizes, prop_unique = nov.get_proportion_unique(lengths[plen])
         plt.plot(sizes, prop_unique, color=color, label=f"p={plen}")
     format_novelty_plot(args, plt)
     plt.title(f"n-gram novelty of {name}")
@@ -229,15 +245,20 @@ def plot_frequency(args):
 
 if __name__ == "__main__":
     args = parse_args()
+    nov = NgramNovelty(args.max_n)
+    sizes, prop_unique = nov.get_novelty_lb(CORPUS_SIZE, entropy=ENTROPY, prob=P_AMBIGUOUS)
+    idx = np.argmin(np.abs(prop_unique - 0.5))
+    threshold = sizes[idx]
+    print("LB threshold:", threshold)
 
+    # Data used by all plots. 
     # data = CorpusData.load(args.root)
-    # lmg = LMGenerations.load(args.root)
+    lmg = LMGenerations.load(args.root)
     results = Results.load(args.root)
-
-    # lengths_12b = get_lengths_for_model("EleutherAI/pythia-12b")
+    lengths_12b = get_lengths_for_model("EleutherAI/pythia-12b")
 
     # Main plots.
-    # plot_model(args, "EleutherAI/pythia-12b")
+    plot_model(args, "EleutherAI/pythia-12b")
     # plot_by_plen(args)
     # plot_frequency(args)
 
@@ -254,5 +275,5 @@ if __name__ == "__main__":
     # decoding.plot_by_beam(lmg, results, lengths_12b)
 
     # Completion loss experiments.
-    closs = CompletionLossPlots(args)
-    closs.plot_by_model(results)
+    # closs = CompletionLossPlots(args)
+    # closs.plot_by_model(results)
