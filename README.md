@@ -93,7 +93,7 @@ You can also copy and paste specific commands from that script to just run parts
 To sample more validation data:
 ```bash
 mkdir $ROOT/data/completion-loss
-python sample_prompts_and_val.py --n_samples 2000 \
+python sample_prompts_and_val.py --n_samples 5000 \
     --prompts_save_path $ROOT/data/completion-loss/prompts.jsonl \
     --val_save_path $ROOT/data/completion-loss/val.jsonl
 ```
@@ -107,9 +107,15 @@ scripts/compute_losses.sh
 To run just one:
 
 ```bash
-python completion_loss.py \
+printf "pythia-12b-loss" | gantry run \
+    --workspace ai2/rusty-dawg \
+    --cluster ai2/allennlp-cirrascale \
+    --venv base \
+    --budget ai2/allennlp \
+    --priority normal \
+    --gpus 1 -- python completion_loss.py \
     $ROOT/data/completion-loss/val.jsonl \
-    $ROOT/results/completion-loss/pythia-12b.json
+    $ROOT/results/completion-loss/pythia-12b-BIG.json
 ```
 
 ### To Plot Results
