@@ -20,6 +20,8 @@ class AsyncRustyDawgClient:
 
         all_lengths = []
         all_counts = []
+        all_entropies = []
+        all_next_tokens = []
 
         n_docs = len(json["text"]) if "text" in json else len(json["tokens"])
         for doc in range(n_docs):
@@ -34,11 +36,26 @@ class AsyncRustyDawgClient:
             sum_counts = np.sum(counts * (lengths == max_lengths), axis=0)
             all_counts.append(sum_counts.tolist())
 
-        return {
+            if "entropies" in blobs[0]:
+                entropies = [blob["entropies"][doc] for blob in blobs]
+                entropies = np.stack(entropies, axis=0)  # [n_machines, n_tokens]
+                sum_entropies = np.sum(counts * entropies * (lengths == max_lengths), axis=0)
+                all_entropies.append((sum_entropies / sum_counts).tolist())
+            
+            if "next_tokens" in blobs[0]:
+                raise NotImplementedError
+                # next_tokens = [blob["next_tokens"][doc] for blob in blobs]
+
+        outputs = {
             "tokens": blobs[0]["tokens"],
             "lengths": all_lengths,
             "counts": all_counts,
         }
+        if all_entropies:
+            outputs["entropies"] = all_entropies
+        if all_next_tokens:
+            outputs["next_tokens"] = all_next_tokens
+        return outputs
 
     async def query(self, json, n_tries: int = 10):
         """Wrapper to avoid rare unpredictable errors. Just try again."""
