@@ -24,12 +24,20 @@ def parse_args():
     parser.add_argument("--batch-size", "-b", type=int, default=10, help="# of docs to send through API at once")
     parser.add_argument("--read-timeout", "-t", type=float, default=60.)
     parser.add_argument("--n-tries", type=int, default=10)
+    parser.add_argument("--return-entropies", action="store_true")
+    parser.add_argument("--return-next-tokens", type=int, default=0)
     return parser.parse_args()
 
 def get_json(args, blobs):
+    kwargs = {}
+    if args.return_entropies:
+        kwargs["return_entropies"] = True
+    if args.return_next_tokens != 0:
+        kwargs["return_next_tokens"] = args.return_next_tokens
+
     if args.text:
         texts = [blob["text"] for blob in blobs]
-        return {"text": texts}
+        return {"text": texts, **kwargs}
     else:
         tokens = []
         for blob in blobs:
@@ -38,7 +46,7 @@ def get_json(args, blobs):
             # if "prompt" in blob:
             #     prompt_len = len(blob["prompt"])
             #     tokens[-1] = tokens[-1][prompt_len:]
-        return {"tokens": tokens}
+        return {"tokens": tokens, **kwargs}
 
 async def main(args):
     # Assumes the input is in .jsonl format with a "text" field.
