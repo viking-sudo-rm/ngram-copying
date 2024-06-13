@@ -11,7 +11,10 @@ class AsyncRustyDawgClient:
     
     async def post_async(self, url, json):
         async with httpx.AsyncClient(timeout=self.timeout) as client:
-            return await client.post(url, json=json)
+            # print(f"Posting {url}")
+            results = await client.post(url, json=json)
+            # print(f"Received {url}")
+            return results
 
     async def raw_query(self, json):
         urls = [f"http://{host}/api/cdawg" for host in self.hosts]

@@ -16,7 +16,12 @@ from matplotlib.patches import Rectangle
 from src.plots import *
 from src.plots.by_decoding import DecodingPlots
 from src.plots.completion_loss import CompletionLossPlots
+from src.plots.main_plots import MainPlots
+from src.plots.example import ExamplePlots
+from src.plots.save_table import SaveTable
+from src.plots.frequency import FrequencyPlots
 from src.data import CorpusData, LMGenerations, Results
+from src.data.filter_lengths import FilterLengths
 from src.ngram_novelty import NgramNovelty, flatten
 from src.deduplication import deduplicate, deduplicate_exact, remove_partial_ngrams
 
@@ -37,92 +42,11 @@ def parse_args():
     parser.add_argument("--no-plen", action="store_true", help="Hide plen from titles")
     return parser.parse_args()
 
-def get_lengths_for_model(model: str, key="lengths") -> dict:
-    plot_lengths = defaultdict(list)
-    plot_lengths["val"] = results.val_iid[key]
-    for doc, lengths in zip(lmg.by_model, results.by_model[key]):
-        if doc["meta"]["model"] != model:
-            continue
-        plen = doc["meta"]["prompt_len"]
-        plot_lengths[plen].append(lengths)
-    for doc, lengths in zip(lmg.by_model_p, results.by_model_p[key]):
-        if doc["meta"]["model"] != model:
-            continue
-        plen = doc["meta"]["prompt_len"]
-        plot_lengths[plen].append(lengths)
-    return plot_lengths
-
-def plot_model(args, model="EleutherAI/pythia-12b", name="Pythia-12B"):
-    print("\n\n=== plot_model ===")
-    if model == "EleutherAI/pythia-12b":
-        lengths = lengths_12b
-    else:
-        lengths = get_lengths_for_model(model)
-
-    plt.figure()
-    
-    val = lengths["val"]
-    # sizes, prop_unique = nov.get_proportion_unique(val)
-    # plt.plot(sizes, prop_unique, linestyle="--", color=GRAY, label="val")
-    
-    deduped, duped = deduplicate_exact(val)
-    sizes, prop_unique = nov.get_proportion_unique(deduped)
-    plt.plot(sizes, prop_unique, linestyle="--", color="purple", label=f"exact")
-    print("# exact duped:", len(duped), "/", len(val))
-
-    FILTERS = [float("inf"), 100, 50, 30, 25]
-    colors = plt.cm.Greys(np.linspace(0.2, 1.0, len(FILTERS)))
-    for color, filter_n in zip(colors, FILTERS):
-        deduped, duped = deduplicate(val, filter_n)
-        print(f"# duped @ {filter_n}:", len(duped), "/", len(val))
-        sizes, prop_unique = nov.get_proportion_unique(deduped)
-        plt.plot(sizes, prop_unique, linestyle="--", color=color, label=f"val@{filter_n}")
-        # if isinstance(filter_n, int):
-        #     # FIXME: why isn't this 100%?
-        #     print("===", filter_n, "===")
-        #     print(sizes[:filter_n])
-        #     print(prop_unique[:filter_n])
-        #     print("Max before filter:", np.max(prop_unique[:filter_n - 1]))
-
-    # Union bound baseline.
-    sizes, prop_unique = nov.get_novelty_lb(CORPUS_SIZE, entropy=ENTROPY, prob=P_AMBIGUOUS)
-    plt.plot(sizes, prop_unique, linestyle="--", color=MUTED_RED, label="LB")
-    
-    for color, plen in zip(ORANGES, PLENS):
-        sizes, prop_unique = nov.get_proportion_unique(lengths[plen])
-        plt.plot(sizes, prop_unique, color=color, label=f"p={plen}")
-    format_novelty_plot(args, plt)
-    plt.title(f"n-gram novelty of {name}")
-
-    os.makedirs("plots/by-model", exist_ok=True)
-    plt.savefig(f"plots/by-model/{clean_model_name(model)}.pdf")
-    plt.close()
-
-    # Histogram plots.
-    vdata = np.array(flatten(remove_partial_ngrams(val)))
-    gdata = np.array(flatten(remove_partial_ngrams(lengths[0])))
-    gdata = np.array([x for x in gdata if x != 0])
-    print("med(gen):", np.median(gdata))
-    print("med(val):", np.mean(vdata))
-
-    plt.figure()
-    kwargs = dict(bins=100, alpha=.5, density=True)
-    plt.hist(np.log(vdata), label="val", **kwargs)
-    plt.hist(np.log(gdata), label=clean_model_name(model), **kwargs)
-    plt.xlabel("non-novel suffix length")
-    plt.legend()
-    plt.tight_layout()
-    ticks = [1, 10, 100]
-    plt.xticks(np.log(ticks), ticks)
-    # plt.gca().get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
-    plt.savefig(f"plots/by-model/histogram.pdf")
-    plt.close()
-
 def plot_by_plen(args, model="EleutherAI/pythia-12b"):
     if model == "EleutherAI/pythia-12b":
         lengths = lengths_12b
     else:
-        lengths = get_lengths_for_model(model)
+        lengths = FilterLengths(lmg, results).get_lengths_for_model(model)
 
     os.makedirs("plots/by-plen", exist_ok=True)
 
@@ -159,10 +83,7 @@ def plot_by_model(args, filter_fn=None):
         plot_lengths[model].append(lengths)
 
     plt.figure()
-    sizes, prop_unique = nov.get_proportion_unique(plot_lengths["val"])
-    plt.plot(sizes, prop_unique, label="val", color=GRAY, linestyle="--")
-    sizes, prop_unique = nov.get_novelty_lb(CORPUS_SIZE, entropy=ENTROPY, prob=P_AMBIGUOUS)
-    plt.plot(sizes, prop_unique, linestyle="--", color=MUTED_RED, label="LB")
+    plot_baselines(plt, nov, lengths_12b["val"], lengths_12b["val_reddit"])
     for color, key in zip(BLUES, MODELS):
         sizes, prop_unique = nov.get_proportion_unique(plot_lengths[key])
         plt.plot(sizes, prop_unique, label=key.split("-")[-1], color=color)
@@ -184,6 +105,7 @@ def plot_by_model(args, filter_fn=None):
     plt.ylabel("mean non-novel suffix length")
     plt.xscale("log")
     plt.tight_layout()
+    sns.despine()
     plt.savefig("plots/by-model/scatter.pdf")
     plt.close()
 
@@ -233,42 +155,6 @@ def plot_by_domain(args, deduped=False):
         plt.savefig(f"{dirname}/{domain}.pdf")
         plt.close()
 
-def plot_frequency(args):
-    os.makedirs("plots/frequency", exist_ok=True)
-    counts_12b = get_lengths_for_model("EleutherAI/pythia-12b", key="counts")
-    plt.figure()
-
-    # Plot the validation set as a baseline here.
-    df = pd.DataFrame({
-        "lengths": flatten(lengths_12b["val"]),
-        "counts": flatten(counts_12b["val"]),
-    })
-    stats = df.groupby("lengths").median()
-    plt.plot(stats.index[:args.max_n], stats["counts"][:args.max_n], label="val", linestyle="--", color=GRAY)
-
-    # Find the threshold at which copying happens.
-    sizes, prop_unique = nov.get_novelty_lb(CORPUS_SIZE, entropy=ENTROPY, prob=P_AMBIGUOUS)
-    idx = np.argmin(np.abs(prop_unique - 0.5))
-    threshold = sizes[idx]
-    plt.axvline(threshold, linestyle="--", color=MUTED_RED, label="LB")
-
-    for plen, color in zip(PLENS, ORANGES):
-        df = pd.DataFrame({
-            "lengths": flatten(lengths_12b[plen]),
-            "counts": flatten(counts_12b[plen]),
-        })
-        # results = df.groupby("lengths").describe()
-        stats = df.groupby("lengths").median()
-        plt.plot(stats.index[:args.max_n], stats["counts"][:args.max_n], label=f"p={plen}", color=color)
-    plt.xlabel("max suffix length")
-    plt.ylabel("median suffix frequency")
-    plt.yscale("log")
-    if args.log_scale:
-        plt.xscale("log")
-    plt.tight_layout()
-    plt.legend()
-    plt.savefig("plots/frequency/freq.pdf")
-
 if __name__ == "__main__":
     args = parse_args()
     nov = NgramNovelty(args.max_n)
@@ -281,15 +167,26 @@ if __name__ == "__main__":
     data = CorpusData.load(args.root)
     lmg = LMGenerations.load(args.root)
     results = Results.load(args.root)
-    lengths_12b = get_lengths_for_model("EleutherAI/pythia-12b")
+    lengths_12b = FilterLengths(lmg, results).get_lengths_for_model("EleutherAI/pythia-12b")
 
-    # # Main plots.
-    # plot_model(args, "EleutherAI/pythia-12b")
+    # Example plots.
+    # example = ExamplePlots(args)
+    # example.plot_example()
+
+    # Main plots.
+    # main = MainPlots(args)
+    # main.plot_model(lengths_12b, lmg, results)
     # plot_by_plen(args)
-    # plot_frequency(args)
 
-    # # Model size and domain experiments.
+    # Frequency plots.
+    # freq = FrequencyPlots(args, base=10)
+    # # freq.plot_frequency()
+    # freq.plot_novelty_by_freq(lengths_12b, lmg, results)
+
+    # Model size and domain experiments.
     # plot_by_model(args)
+
+    # # Plot by domain.
     # plot_by_domain(args)
     # plot_by_domain(args, deduped=True)
 
@@ -300,6 +197,11 @@ if __name__ == "__main__":
     # decoding.plot_by_temp(lmg, results, lengths_12b)
     # decoding.plot_by_beam(lmg, results, lengths_12b)
 
-    # Completion loss experiments.
+    # # Completion loss experiments.
     closs = CompletionLossPlots(args)
-    closs.plot_by_model(results)
+    # closs.plot_by_model(results)
+    closs.plot_big(results)
+    closs.plot_by_freq(results)
+
+    # table = SaveTable()
+    # table.save(lmg, results)

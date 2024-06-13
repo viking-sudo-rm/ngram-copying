@@ -13,3 +13,6 @@ def try_load_json(path: str) -> Optional[dict]:
         return None
     with open(path) as fh:
         return json.load(fh)
+
+def flatten(lists):
+    return [item for row in lists for item in row]

@@ -7,6 +7,8 @@ from .utils import try_load_json
 class Results(NamedTuple):
     val_by_domain: Optional[dict]
     val_iid: Optional[dict]
+    val_cl: Optional[dict]
+    val_reddit: Optional[dict]
     by_domain: Optional[dict]
     by_domain_deduped: Optional[dict]
     by_model: Optional[dict]
@@ -24,6 +26,8 @@ class Results(NamedTuple):
         results = {
             "val_by_domain": "val.json",
             "val_iid": "val-iid.json",
+            "val_cl": "val-cl.json",
+            "val_reddit": "val-reddit.json",
             "by_domain": "by-domain.json",
             "by_domain_deduped": "by-domain-deduped.json",
             "by_model": "by-model.json",

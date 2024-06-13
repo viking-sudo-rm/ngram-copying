@@ -14,16 +14,36 @@ export ROOT=/net/nfs.cirrascale/allennlp/willm/ngram-copying
 ### Sampling Prompts and Validation Data
 
 Prompts can be sampled from the Pile via:
-```
-python sample_prompts_and_val.py --n_samples=500
+```shell
+python sample_prompts_and_val.py \
+    --n_samples 500 \
+    --train_path /net/nfs.cirrascale/allennlp/willm/data/pile/00_0.json \
+    --val_path /net/nfs.cirrascale/allennlp/willm/data/pile/val.jsonl \
+    --prompts_save_path /net/nfs.cirrascale/allennlp/willm/ngram-copying/data/iid/prompts.jsonl \
+    --val_save_path /net/nfs.cirrascale/allennlp/willm/ngram-copying/data/iid/val.jsonl
 ```
 
 Or to generate models with 100 samples per domain (besides one where there are not 100):
-```
+```shell
 mkdir /net/nfs.cirrascale/allennlp/willm/ngram-copying/data/by-domain
-python sample_prompts_and_val.py --by_domain --n_samples=100 \
+python sample_prompts_and_val.py \
+     --n_samples 100 \
+    --by_domain \
+    --train_path /net/nfs.cirrascale/allennlp/willm/data/pile/00_0.json \
+    --val_path /net/nfs.cirrascale/allennlp/willm/data/pile/val.jsonl \
     --prompts_save_path=$ROOT/data/by-domain/prompts.jsonl \
     --val_save_path=$ROOT/data/by-domain/val.jsonl
+```
+
+To generate Dolma Reddit data:
+```shell
+mkdir /net/nfs.cirrascale/allennlp/willm/ngram-copying/data/dolma-reddit
+python sample_prompts_and_val.py \
+    --format "dolma" \
+    --n_samples 500 \
+    --date_cutoff "2019-12-31T11:59:59+00:00" \
+    --val_path /net/nfs.cirrascale/allennlp/willm/data/v3_small/dolma_reddit/val/val_reddit_uniform.jsonl \
+    --val_save_path /net/nfs.cirrascale/allennlp/willm/ngram-copying/data/dolma-reddit/val.jsonl
 ```
 
 ### Generating Data from Models

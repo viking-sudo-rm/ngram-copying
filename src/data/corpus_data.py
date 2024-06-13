@@ -8,12 +8,19 @@ class CorpusData(NamedTuple):
     val_iid: Optional[list]
     prompts_by_domain: Optional[list]
     val_by_domain: Optional[list]
+    val_reddit: Optional[list]
 
     @classmethod
     def load(cls, root):
-        return cls(
-            prompts_iid=try_load_jsonl(os.path.join(root, "data/iid/prompts.jsonl")),
-            val_iid=try_load_jsonl(os.path.join(root, "data/iid/val.jsonl")),
-            prompts_by_domain=try_load_jsonl(os.path.join(root, "data/by-domain/prompts.jsonl")),
-            val_by_domain=try_load_jsonl(os.path.join(root, "data/by-domain/val.jsonl")),
-        )
+        data = {
+            "prompts_iid": "iid/prompts.jsonl",
+            "val_iid": "iid/val.jsonl",
+            "prompts_by_domain": "by-domain/prompts.jsonl",
+            "val_by_domain": "by-domain/val.jsonl",
+            "val_reddit": "dolma-reddit/val.jsonl",
+        }
+
+        return cls(**{
+            name: try_load_jsonl(os.path.join(root, "data", path))
+            for name, path in data.items()
+        })
