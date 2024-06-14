@@ -5,16 +5,16 @@
 # --return-next-tokens "-1" is slow!!!
 
 ROOT=${ROOT:-"/net/nfs.cirrascale/allennlp/willm/ngram-copying"}
-BATCH_SIZE=100
+BATCH_SIZE=1
 TIMEOUT=999999999999
 
 # DEBUG
-python query_cdawgs.py \
-    $ROOT/data/debug.jsonl \
-    $ROOT/results/debug.json \
-    --batch-size $BATCH_SIZE \
-    --read-timeout $TIMEOUT \
-    --return-entropies
+# python query_cdawgs.py \
+#     $ROOT/data/debug.jsonl \
+#     $ROOT/results/debug.json \
+#     --batch-size $BATCH_SIZE \
+#     --read-timeout $TIMEOUT \
+#     --return-entropies
 
 # Pass by-domain val through the CDAWGs.
 # python query_cdawgs.py \
@@ -30,21 +30,49 @@ python query_cdawgs.py \
 #     --batch-size $BATCH_SIZE \
 #     --read-timeout $TIMEOUT
 
-# Pass completion-loss val through the CDAWGs.
+# Pass dolma/reddit through the CDAWGs.
+# python query_cdawgs.py \
+#     $ROOT/data/dolma/reddit.jsonl \
+#     $ROOT/results/dolma/reddit.json \
+#     --batch-size $BATCH_SIZE \
+#     --read-timeout $TIMEOUT
+
+# echo "=== dolma/cc ==="
+# python query_cdawgs.py \
+#     $ROOT/data/dolma/cc.jsonl \
+#     $ROOT/results/dolma/cc.json \
+#     --batch-size $BATCH_SIZE \
+#     --read-timeout $TIMEOUT
+
+echo "=== dolma/pes2o ==="
 python query_cdawgs.py \
-    $ROOT/data/completion-loss/val.jsonl \
-    $ROOT/results/val-cl-entropy.json \
+    $ROOT/data/dolma/pes2o.jsonl \
+    $ROOT/results/dolma/pes2o.json \
     --batch-size $BATCH_SIZE \
-    --read-timeout $TIMEOUT \
-    --return-entropies
+    --read-timeout $TIMEOUT
+
+echo "=== dolma/stack ==="
+python query_cdawgs.py \
+    $ROOT/data/dolma/stack.jsonl \
+    $ROOT/results/dolma/stack.json \
+    --batch-size $BATCH_SIZE \
+    --read-timeout $TIMEOUT
+
+# echo "=== completion-loss ==="
+# python query_cdawgs.py \
+#     $ROOT/data/completion-loss/val.jsonl \
+#     $ROOT/results/val-cl-entropy.json \
+#     --batch-size $BATCH_SIZE \
+#     --read-timeout $TIMEOUT \
+#     --return-entropies
 
 # queries
-python query_cdawgs.py \
-    $ROOT/data/queries.jsonl \
-    $ROOT/results/queries.json \
-    --batch-size $BATCH_SIZE \
-    --read-timeout $TIMEOUT \
-    --text
+# python query_cdawgs.py \
+#     $ROOT/data/queries.jsonl \
+#     $ROOT/results/queries.json \
+#     --batch-size $BATCH_SIZE \
+#     --read-timeout $TIMEOUT \
+#     --text
 
 # echo "=== Generating by-domain results ==="
 # python query_cdawgs.py \

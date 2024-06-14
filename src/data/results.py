@@ -9,6 +9,9 @@ class Results(NamedTuple):
     val_iid: Optional[dict]
     val_cl: Optional[dict]
     val_reddit: Optional[dict]
+    val_cc: Optional[dict]
+    val_stack: Optional[dict]
+    val_pes2o: Optional[dict]
     by_domain: Optional[dict]
     by_domain_deduped: Optional[dict]
     by_model: Optional[dict]
@@ -27,7 +30,10 @@ class Results(NamedTuple):
             "val_by_domain": "val.json",
             "val_iid": "val-iid.json",
             "val_cl": "val-cl.json",
-            "val_reddit": "val-reddit.json",
+            "val_reddit": "dolma/reddit.json",
+            "val_cc": "dolma/cc.json",
+            "val_stack": "dolma/stack.json",
+            "val_pes2o": "dolma/pes2o.json",
             "by_domain": "by-domain.json",
             "by_domain_deduped": "by-domain-deduped.json",
             "by_model": "by-model.json",

@@ -19,6 +19,7 @@ class DecodingPlots:
         self.args = args
 
     def plot_by_topp(self, lmg: LMGenerations, results: Results, lengths_12b: dict):
+        print("\n=== plot_by_topp ===")
         os.makedirs("plots/by-decoding", exist_ok=True)
         nov = NgramNovelty(self.args.max_n)
 
@@ -33,7 +34,8 @@ class DecodingPlots:
         # FIXME: p is overloaded between prefix length and here.
         for plen in PLENS:
             plt.figure()
-            plot_baselines(plt, nov, lengths_12b["val"], lengths_12b["val_reddit"])
+            lengths_dolma = lengths_12b["val_reddit"] + lengths_12b["val_pes2o"]
+            plot_baselines(plt, nov, lengths_12b["val"], lengths_dolma)
             
             colors = plt.cm.Purples(np.linspace(0.2, 1.0, len(PS)))
             for color, p in zip(colors, reversed(PS)):
@@ -41,7 +43,7 @@ class DecodingPlots:
                 sizes, prop_unique = nov.get_proportion_unique(lengths)
                 plt.plot(sizes, prop_unique, label=Rf"$p$={p}", color=color)
 
-            title = R"$n$-gram novelty by top-$p$"
+            title = R"$n$-novelty by top-$p$"
             if not self.args.no_plen:
                 title += f" (plen={plen})"
             plt.title(title)
@@ -50,6 +52,7 @@ class DecodingPlots:
             plt.close()
 
     def plot_by_topk(self, lmg: LMGenerations, results: Results, lengths_12b: dict):
+        print("\n=== plot_by_topk ===")
         os.makedirs("plots/by-decoding", exist_ok=True)
         nov = NgramNovelty(self.args.max_n)
 
@@ -63,7 +66,8 @@ class DecodingPlots:
     
         for plen in PLENS:
             plt.figure()
-            plot_baselines(plt, nov, lengths_12b["val"], lengths_12b["val_reddit"])
+            lengths_dolma = lengths_12b["val_reddit"] + lengths_12b["val_pes2o"]
+            plot_baselines(plt, nov, lengths_12b["val"], lengths_dolma)
             
             colors = plt.cm.Purples(np.linspace(0.2, 1.0, len(KS)))
             for color, k in zip(colors, reversed(KS)):
@@ -71,7 +75,7 @@ class DecodingPlots:
                 sizes, prop_unique = nov.get_proportion_unique(lengths)
                 plt.plot(sizes, prop_unique, label=Rf"$k$={k}", color=color)
 
-            title = R"$n$-gram novelty by top-$k$"
+            title = R"$n$-novelty by top-$k$"
             if not self.args.no_plen:
                 title += f" (plen={plen})"
             plt.title(title)
@@ -80,6 +84,7 @@ class DecodingPlots:
             plt.close()
 
     def plot_by_temp(self, lmg: LMGenerations, results: Results, lengths_12b: dict):
+        print("\n=== plot_by_temp ===")
         os.makedirs("plots/by-decoding", exist_ok=True)
         nov = NgramNovelty(self.args.max_n)
 
@@ -97,7 +102,8 @@ class DecodingPlots:
         # Only ran temperature experiments with plen=0.
         for plen in [0]:
             plt.figure()
-            plot_baselines(plt, nov, lengths_12b["val"], lengths_12b["val_reddit"])
+            lengths_dolma = lengths_12b["val_reddit"] + lengths_12b["val_pes2o"]
+            plot_baselines(plt, nov, lengths_12b["val"], lengths_dolma)
 
             colors = plt.cm.Purples(np.linspace(0.2, 1.0, len(TEMPS)))
             for color, temp in zip(colors, reversed(TEMPS)):
@@ -108,7 +114,7 @@ class DecodingPlots:
                 n100 = prop_unique[sizes == 100].item()
                 print(f"temp={temp}: {n10:.2f} @ 10, {n100:.2f} @ 100")
 
-            title = R"$n$-gram novelty by temperature"
+            title = R"$n$-novelty by temperature"
             if not self.args.no_plen:
                 title += f" (plen={plen})"
             plt.title(title)
@@ -117,6 +123,7 @@ class DecodingPlots:
             plt.close()
 
     def plot_by_beam(self, lmg: LMGenerations, results: Results, lengths_12b: dict):
+        print("\n=== plot_by_beam ===")
         os.makedirs("plots/by-decoding", exist_ok=True)
         nov = NgramNovelty(self.args.max_n)
 
@@ -133,7 +140,8 @@ class DecodingPlots:
     
         for plen in PLENS:
             plt.figure()
-            plot_baselines(plt, nov, lengths_12b["val"], lengths_12b["val_reddit"])
+            lengths_dolma = lengths_12b["val_reddit"] + lengths_12b["val_pes2o"]
+            plot_baselines(plt, nov, lengths_12b["val"], lengths_dolma)
             
             colors = plt.cm.Purples(np.linspace(0.2, 1.0, len(BEAMS)))
             for color, beam in zip(colors, reversed(BEAMS)):
@@ -144,7 +152,7 @@ class DecodingPlots:
                 n100 = prop_unique[sizes == 100].item()
                 print(f"beam={beam}: {n10:.2f} @ 10, {n100:.2f} @ 100")
 
-            title = R"$n$-gram novelty by beam size"
+            title = R"$n$-novelty by beam size"
             if not self.args.no_plen:
                 title += f" (plen={plen})"
             plt.title(title)

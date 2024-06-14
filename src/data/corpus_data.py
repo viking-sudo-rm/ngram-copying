@@ -9,6 +9,9 @@ class CorpusData(NamedTuple):
     prompts_by_domain: Optional[list]
     val_by_domain: Optional[list]
     val_reddit: Optional[list]
+    val_cc: Optional[list]
+    val_stack: Optional[list]
+    val_pes2o: Optional[list]
 
     @classmethod
     def load(cls, root):
@@ -17,7 +20,10 @@ class CorpusData(NamedTuple):
             "val_iid": "iid/val.jsonl",
             "prompts_by_domain": "by-domain/prompts.jsonl",
             "val_by_domain": "by-domain/val.jsonl",
-            "val_reddit": "dolma-reddit/val.jsonl",
+            "val_reddit": "dolma/reddit.jsonl",
+            "val_cc": "dolma/cc.jsonl",
+            "val_stack": "dolma/stack.jsonl",
+            "val_pes2o": "dolma/pes2o.jsonl",
         }
 
         return cls(**{

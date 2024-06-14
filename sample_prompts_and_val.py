@@ -23,6 +23,8 @@ def parse_args():
     parser.add_argument("--by_domain", action="store_true")
     parser.add_argument("--format", choices=DOMAIN_KEYS.keys(), default="pile")
     parser.add_argument("--date_cutoff", type=str, default=None, help="ISO format, e.g., 2019-12-31T11:59:59+00:00")
+    parser.add_argument("--date_key", type=str, default="created")
+    parser.add_argument("--trim_date", action="store_true")
     return parser.parse_args()
 
 DOMAIN_KEYS = {
@@ -43,6 +45,9 @@ class Jsonl:
         return cls(lines, **kwargs)
 
     def sample_from(self, n_samples: int):
+        if len(self.lines) < n_samples:
+            print(f"WARNING: Didn't sample because # samples ({n_samples}) < # lines ({len(self.lines)})")
+            return
         self.lines = random.sample(self.lines, n_samples)
         assert all(line.strip() for line in self.lines)
     
@@ -93,13 +98,16 @@ class Jsonl:
     def filter(self, filter_fn):
         self.lines = [line for line in self.lines if filter_fn(line)]
     
-    def filter_by_date(self, date, key="created"):
+    def filter_by_date(self, date, key="created", trim=False):
         """Date is string in ISO format and key field should exist."""
         date = datetime.fromisoformat(date)
 
         def _compare_fn(line):
             blob = json.loads(line)
-            other_date = datetime.fromisoformat(blob[key])
+            date_string = blob[key]
+            if trim:
+                date_string = date_string.split("T")[0]
+            other_date = datetime.fromisoformat(date_string)
             return date < other_date
 
         self.filter(_compare_fn)
@@ -114,7 +122,8 @@ def main(args):
         print("\nLoading prompts...")
         prompts = Jsonl.load(args.train_path, fmt=args.format)
         if args.date_cutoff is not None:
-            prompts.filter_by_date(args.date_cutoff)
+            print("Filtering by cutoff", args.date_cutoff)
+            prompts.filter_by_date(args.date_cutoff, key=args.date_key, trim=args.trim_date)
             print("# lines after date filter:", len(prompts))
         print("Sampling and saving prompts...")
         if args.by_domain:
@@ -128,7 +137,8 @@ def main(args):
         print("\nLoading validation text...")
         val = Jsonl.load(args.val_path, fmt=args.format)
         if args.date_cutoff is not None:
-            val.filter_by_date(args.date_cutoff)
+            print("Filtering by cutoff", args.date_cutoff)
+            val.filter_by_date(args.date_cutoff, key=args.date_key, trim=args.trim_date)
             print("# lines after date filter:", len(val))
         print("\nSampling and saving validation documents...")
         if args.by_domain:

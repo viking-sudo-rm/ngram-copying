@@ -44,6 +44,9 @@ class SaveTable:
         cols1 = {}
         cols1["control", "val"] = get_entries(by_model["val"])
         cols1["control", "reddit"] = get_entries(by_model["val_reddit"])
+        cols1["control", "cc"] = get_entries(by_model["val_cc"])
+        cols1["control", "stack"] = get_entries(by_model["val_stack"])
+        cols1["control", "pes2o"] = get_entries(by_model["val_pes2o"])
         for size in MODEL_SIZES:
             data = by_model["pythia-" + size]
             cols1["model size", size] = get_entries(data)

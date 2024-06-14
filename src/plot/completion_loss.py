@@ -115,8 +115,8 @@ class CompletionLossPlots:
             stats = uncompleted[model]
             # Substract 1 from max-n because it starts one later.
             plt.plot(stats.index[:max_n - 1], smooth(stats["losses"][:max_n - 1]), color=color)
-        plt.xlabel("non-novel suffix length")
-        plt.ylabel("mean completion loss")
+        plt.xlabel("Non-novel suffix length")
+        plt.ylabel("Mean completion loss")
         if args.log_scale:
             plt.xscale("log")
             max_e = floor(log(max_n + 1, 10))
@@ -161,14 +161,14 @@ class CompletionLossPlots:
         max_n = self.args.max_n
 
         stats = completed["pythia-12b"]
-        plt.plot(stats.index[:max_n], smooth(stats["losses"][:max_n]), color="blue", label="in train")
+        plt.plot(stats.index[:max_n], smooth(stats["losses"][:max_n]), color="blue", label="In train")
 
         stats = uncompleted["pythia-12b"]
         # Substract 1 from max-n because it starts one later.
-        plt.plot(stats.index[:max_n - 1], smooth(stats["losses"][:max_n - 1]), color="red", label="not in train")
+        plt.plot(stats.index[:max_n - 1], smooth(stats["losses"][:max_n - 1]), color="red", label="Not in train")
 
         plt.xlabel("$n$-gram size")
-        plt.ylabel("completion loss")
+        plt.ylabel("Mean completion loss")
         if self.args.log_scale:
             plt.xscale("log")
             max_e = floor(log(max_n + 1, 10))
@@ -211,7 +211,7 @@ class CompletionLossPlots:
             stats = df.groupby("freq-oom").mean()
             plt.plot([10**x for x in stats.index], stats["loss"], color=color, marker=".", label=f"{n}-grams")
         plt.xlabel("$n$-gram frequency")
-        plt.ylabel("mean completion loss")
+        plt.ylabel("Mean completion loss")
         plt.xscale("log")
         plt.legend()
         sns.despine()

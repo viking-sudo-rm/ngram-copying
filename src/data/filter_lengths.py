@@ -1,16 +1,25 @@
 from collections import defaultdict
 
-from src.plots import clean_model_name
+from src.plot import clean_model_name
 
 class FilterLengths:
     def __init__(self, lmg, results):
         self.lmg = lmg
         self.results = results
 
+    def get_baselines(self, key="lengths") -> dict:
+        lengths = {}
+        lengths["val"] = self.results.val_iid[key]
+        lengths["val_reddit"] = self.results.val_reddit[key]
+        lengths["val_cc"] = self.results.val_cc[key]
+        lengths["val_stack"] = self.results.val_stack[key]
+        lengths["val_pes2o"] = self.results.val_pes2o[key]
+        return lengths
+
+
     def get_lengths_for_model(self, model: str, key="lengths") -> dict:
         plot_lengths = defaultdict(list)
-        plot_lengths["val"] = self.results.val_iid[key]
-        plot_lengths["val_reddit"] = self.results.val_reddit["lengths"]
+        plot_lengths.update(**self.get_baselines(key))
         for doc, lengths in zip(self.lmg.by_model, self.results.by_model[key]):
             if doc["meta"]["model"] != model:
                 continue
@@ -25,8 +34,7 @@ class FilterLengths:
 
     def get_by_model(self, filter_fn=None):
         plot_lengths = defaultdict(list)
-        plot_lengths["val"] = self.results.val_iid["lengths"]
-        plot_lengths["val_reddit"] = self.results.val_reddit["lengths"]
+        plot_lengths.update(**self.get_baselines())
         for doc, lengths in zip(self.lmg.by_model, self.results.by_model["lengths"]):
             if filter_fn and not filter_fn(doc["meta"]):
                 continue

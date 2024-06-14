@@ -37,13 +37,25 @@ python sample_prompts_and_val.py \
 
 To generate Dolma Reddit data:
 ```shell
-mkdir /net/nfs.cirrascale/allennlp/willm/ngram-copying/data/dolma-reddit
+mkdir /net/nfs.cirrascale/allennlp/willm/ngram-copying/data/dolma
+DOLMA=/net/nfs.cirrascale/allennlp/willm/data/v3_small
 python sample_prompts_and_val.py \
     --format "dolma" \
     --n_samples 500 \
     --date_cutoff "2019-12-31T11:59:59+00:00" \
     --val_path /net/nfs.cirrascale/allennlp/willm/data/v3_small/dolma_reddit/val/val_reddit_uniform.jsonl \
-    --val_save_path /net/nfs.cirrascale/allennlp/willm/ngram-copying/data/dolma-reddit/val.jsonl
+    --val_save_path /net/nfs.cirrascale/allennlp/willm/ngram-copying/data/dolma/reddit.jsonl
+```
+
+To generate Dolma CC data:
+```shell
+python sample_prompts_and_val.py \
+    --format "dolma" \
+    --n_samples 500 \
+    --date_cutoff "2019-12-31" \
+    --trim_date \
+    --val_path /net/nfs.cirrascale/allennlp/willm/data/v3_small/dolma_pes2o/val/val_pes2o.jsonl \
+    --val_save_path /net/nfs.cirrascale/allennlp/willm/ngram-copying/data/dolma/pes2o.jsonl
 ```
 
 ### Generating Data from Models

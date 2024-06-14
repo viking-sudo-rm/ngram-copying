@@ -1,6 +1,7 @@
 from math import log, floor
 import matplotlib.ticker
 import seaborn as sns
+import matplotlib.pyplot as plt  # Technically unused.
 
 from .constants import *
 
@@ -14,6 +15,9 @@ def clean_size(size) -> float:
         return float(size[:-1]) * 1e9
     else:
         raise ValueError
+
+def clean_size_string(key) -> str:
+    return key.split("-")[-1].replace("m", "M").replace("b", "B")
 
 def format_novelty_plot(args, plt):
     plt.legend()
@@ -32,16 +36,19 @@ def format_novelty_plot(args, plt):
     plt.tight_layout()
     sns.despine()  # Not called on passed object.
 
-def plot_baselines(plt, nov, val, val_reddit, show_lb=True):
-    sizes, red_unique = nov.get_proportion_unique(val_reddit)
-    plt.plot(sizes, red_unique, label="Reddit", color=GRAY, linestyle="--")
-
-    sizes, val_unique = nov.get_proportion_unique(val)
-    plt.plot(sizes, val_unique, label="val", color=LIGHT_GRAY, linestyle="--")
-
+def plot_baselines(plt, nov, val, val_dolma, show_lb=False):
     if show_lb:
         sizes, lb_unique = nov.get_novelty_lb(CORPUS_SIZE, entropy=ENTROPY, prob=P_AMBIGUOUS)
-        plt.plot(sizes, lb_unique, linestyle="--", color=MUTED_RED, label="LB")
+        plt.fill_between(sizes, 0, lb_unique, color=MUTED_RED, alpha=0.2, label="LB")
+        # plt.plot(sizes, lb_unique, linestyle="-", color=MUTED_RED)
+
+    sizes, red_unique = nov.get_proportion_unique(val_dolma)
+    plt.plot(sizes, red_unique, label="Dolma", color=GRAY, linestyle="--")
+
+    sizes, val_unique = nov.get_proportion_unique(val)
+    plt.plot(sizes, val_unique, label="Valid", color=LIGHT_GRAY, linestyle="-.")
+
+    if show_lb:
         return val_unique, red_unique, lb_unique
     else:
         return val_unique, red_unique

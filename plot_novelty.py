@@ -13,17 +13,17 @@ from copy import deepcopy
 import matplotlib.ticker
 from matplotlib.patches import Rectangle
 
-from src.plots import *
-from src.plots.by_decoding import DecodingPlots
-from src.plots.completion_loss import CompletionLossPlots
-from src.plots.main_plots import MainPlots
-from src.plots.example import ExamplePlots
-from src.plots.save_table import SaveTable
-from src.plots.frequency import FrequencyPlots
+from src.plot import *
+from src.plot.by_decoding import DecodingPlots
+from src.plot.completion_loss import CompletionLossPlots
+from src.plot.main_plots import MainPlots
+from src.plot.example import ExamplePlots
+from src.plot.save_table import SaveTable
+from src.plot.save_ngrams import SaveNgrams
+from src.plot.frequency import FrequencyPlots
 from src.data import CorpusData, LMGenerations, Results
 from src.data.filter_lengths import FilterLengths
 from src.ngram_novelty import NgramNovelty, flatten
-from src.deduplication import deduplicate, deduplicate_exact, remove_partial_ngrams
 
 plt.rcParams.update({'font.size': 13})
 
@@ -56,7 +56,7 @@ def plot_by_plen(args, model="EleutherAI/pythia-12b"):
     plt.violinplot(buckets, showmeans=True)
     plt.xticks(range(1, len(PLENS) + 2), ["val"] + PLENS)
     plt.xlabel("prompt length")
-    plt.ylabel("mean non-novel suffix length")
+    plt.ylabel("Mean NNSL")
     plt.yscale("log")
     plt.savefig("plots/by-plen/violin.pdf")
     plt.close()
@@ -66,7 +66,7 @@ def plot_by_plen(args, model="EleutherAI/pythia-12b"):
     plt.scatter(PLENS, mean_lengths)
     plt.xticks(range(1, len(PLENS) + 2), ["val"] + PLENS)
     plt.xlabel("prompt length")
-    plt.ylabel("mean non-novel suffix length")
+    plt.ylabel("mean NNSL")
     plt.xscale("symlog")
     plt.savefig("plots/by-plen/scatter.pdf")
     plt.close()
@@ -74,8 +74,10 @@ def plot_by_plen(args, model="EleutherAI/pythia-12b"):
 def plot_by_model(args, filter_fn=None):
     os.makedirs("plots/by-model", exist_ok=True)
     
+    # TODO: Use FilterLengths
     plot_lengths = defaultdict(list)
     plot_lengths["val"] = results.val_iid["lengths"]
+    plot_lengths["val_reddit"] = results.val_reddit["lengths"]
     for doc, lengths in zip(lmg.by_model, results.by_model["lengths"]):
         if filter_fn and not filter_fn(doc["meta"]):
             continue
@@ -83,10 +85,11 @@ def plot_by_model(args, filter_fn=None):
         plot_lengths[model].append(lengths)
 
     plt.figure()
-    plot_baselines(plt, nov, lengths_12b["val"], lengths_12b["val_reddit"])
+    lengths_dolma = lengths_12b["val_reddit"] + lengths_12b["val_pes2o"]
+    plot_baselines(plt, nov, lengths_12b["val"], lengths_dolma)
     for color, key in zip(BLUES, MODELS):
         sizes, prop_unique = nov.get_proportion_unique(plot_lengths[key])
-        plt.plot(sizes, prop_unique, label=key.split("-")[-1], color=color)
+        plt.plot(sizes, prop_unique, label=clean_size_string(key), color=color)
     format_novelty_plot(args, plt)
     plt.savefig("plots/by-model/curves.pdf")
     plt.close()
@@ -94,15 +97,24 @@ def plot_by_model(args, filter_fn=None):
     sizes = []
     mean_lengths = []
     for model, lengths in plot_lengths.items():
-        if model == "val":
+        if "val" in model:
             continue
         sizes.append(clean_size(model.split("-")[-1]))
         mean_lengths.append(np.mean(flatten(lengths)))
 
+    pairs = list(zip(sizes, mean_lengths))
+    pairs.sort()
+    sizes, mean_lengths = zip(*pairs)
+
+    mean_red = np.mean(flatten(plot_lengths["val_reddit"]))
+
     plt.figure()
-    plt.scatter(sizes, mean_lengths, linestyle="-")
-    plt.xlabel("model size")
-    plt.ylabel("mean non-novel suffix length")
+    plt.axhline(mean_red, color=GRAY, linestyle="--")
+    for color, size, length in zip(BLUES, sizes, mean_lengths):
+        plt.scatter(size, length, s=100, marker=".", color=color)
+    # plt.plot(sizes, mean_lengths, linestyle="-", marker=".", color=BLUES[-1])
+    plt.xlabel("Model size")
+    plt.ylabel("Mean NNSL")
     plt.xscale("log")
     plt.tight_layout()
     sns.despine()
@@ -170,38 +182,44 @@ if __name__ == "__main__":
     lengths_12b = FilterLengths(lmg, results).get_lengths_for_model("EleutherAI/pythia-12b")
 
     # Example plots.
-    # example = ExamplePlots(args)
-    # example.plot_example()
+    example = ExamplePlots(args)
+    example.plot_example()
 
     # Main plots.
-    # main = MainPlots(args)
-    # main.plot_model(lengths_12b, lmg, results)
-    # plot_by_plen(args)
+    main = MainPlots(args)
+    main.plot_model(lengths_12b, lmg, results)
+    main.plot_by_seq_len(lengths_12b)
+    plot_by_plen(args)
 
     # Frequency plots.
     # freq = FrequencyPlots(args, base=10)
     # # freq.plot_frequency()
     # freq.plot_novelty_by_freq(lengths_12b, lmg, results)
 
-    # Model size and domain experiments.
-    # plot_by_model(args)
+    # Model size.
+    plot_by_model(args)
 
     # # Plot by domain.
     # plot_by_domain(args)
     # plot_by_domain(args, deduped=True)
 
     # # Decoding experiments.
-    # decoding = DecodingPlots(args)
-    # decoding.plot_by_topk(lmg, results, lengths_12b)
-    # decoding.plot_by_topp(lmg, results, lengths_12b)
-    # decoding.plot_by_temp(lmg, results, lengths_12b)
-    # decoding.plot_by_beam(lmg, results, lengths_12b)
+    decoding = DecodingPlots(args)
+    decoding.plot_by_topk(lmg, results, lengths_12b)
+    decoding.plot_by_topp(lmg, results, lengths_12b)
+    decoding.plot_by_temp(lmg, results, lengths_12b)
+    decoding.plot_by_beam(lmg, results, lengths_12b)
 
-    # # Completion loss experiments.
+    # Completion loss experiments.
     closs = CompletionLossPlots(args)
     # closs.plot_by_model(results)
     closs.plot_big(results)
     closs.plot_by_freq(results)
 
-    # table = SaveTable()
-    # table.save(lmg, results)
+    # Table of mean NNSL results.
+    table = SaveTable()
+    table.save(lmg, results)
+
+    # Example n-grams.
+    # ngrams = SaveNgrams(n_samples=50)
+    # ngrams.save(lmg, results)
